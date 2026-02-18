@@ -60,7 +60,7 @@ export const ReceiptManager = ({ receipts, onAdd, onDelete, tenants, owners, exp
 
     const result = await onAdd(receiptData);
     if (result) {
-      generateReceiptPDF(result);
+      generateReceiptPDF(result, agency);
       setAmountInput(''); 
       setSelectedTenantId('');
     }
@@ -176,7 +176,7 @@ export const ReceiptManager = ({ receipts, onAdd, onDelete, tenants, owners, exp
                     <td className="p-3">{r.tenantName}</td>
                     <td className="p-3 font-bold">{formatFCFA(Number(r.amount))} FCFA</td>
                     <td className="p-3 text-right flex justify-end gap-2">
-                      <Button size="icon" variant="ghost" onClick={() => generateReceiptPDF(r)}>
+                      <Button size="icon" variant="ghost" onClick={() => generateReceiptPDF(r, agency)}>
                         <Download className="w-4 h-4" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => onDelete(r.id!)}>
