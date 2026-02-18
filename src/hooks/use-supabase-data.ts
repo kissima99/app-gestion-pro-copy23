@@ -9,12 +9,6 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setData([]);
-        return;
-      }
-
       const { data: result, error } = await supabase
         .from(tableName)
         .select('*')
@@ -35,12 +29,9 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
 
   const addItem = async (item: any) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non authentifié");
-
       const { data: result, error } = await supabase
         .from(tableName)
-        .insert([{ ...item, user_id: user.id }])
+        .insert([item])
         .select();
 
       if (error) throw error;

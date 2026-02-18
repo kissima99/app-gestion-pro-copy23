@@ -12,20 +12,15 @@ import { DataManagement } from '../components/DataManagement';
 import { useSupabaseData } from '../hooks/use-supabase-data';
 import { useLocalStorage } from '../hooks/use-local-storage';
 import { Owner, Tenant, Receipt, Expense, Agency, Arrear } from '../types/rental';
-import { Users, Moon, Sun, Building2, Wallet, Car, LogOut, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Users, Moon, Sun, Building2, Wallet, Car, ShieldCheck, BarChart3 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { useNavigate, Link } from "react-router-dom";
-import { supabase } from '../lib/supabase';
-import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const Index = () => {
-  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
 
-  // Utilisation des hooks Supabase pour les données réelles
+  // Utilisation des hooks Supabase pour les données
   const ownersData = useSupabaseData<Owner>('owners');
   const tenantsData = useSupabaseData<Tenant>('tenants');
   const receiptsData = useSupabaseData<Receipt>('receipts');
@@ -36,35 +31,6 @@ const Index = () => {
     name: '', address: '', phone: '', email: '', ninea: '', rccm: '', commissionRate: 10
   });
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login');
-        return;
-      }
-      setUser(session.user);
-      
-      // Récupérer le profil pour vérifier le rôle
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      setProfile(prof);
-    };
-
-    checkUser();
-  }, [navigate]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Déconnexion réussie");
-    navigate('/login');
-  };
-
-  if (!user) return null;
-
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg p-4 flex justify-between items-center">
@@ -74,29 +40,17 @@ const Index = () => {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight leading-none">GESTION PRO</h1>
-            <p className="text-[10px] opacity-80 uppercase tracking-widest mt-1">SaaS Multi-Clients</p>
+            <p className="text-[10px] opacity-80 uppercase tracking-widest mt-1">Accès Libre</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Bouton Automobile mis en évidence */}
-          <Button variant="secondary" size="sm" asChild className="mr-2 bg-amber-500 hover:bg-amber-600 text-white border-none shadow-md animate-pulse hover:animate-none">
+          <Button variant="secondary" size="sm" asChild className="mr-2 bg-amber-500 hover:bg-amber-600 text-white border-none shadow-md">
             <Link to="/automobile">
               <Car className="w-4 h-4 mr-2" />
               ACCÈS AUTOMOBILE
             </Link>
           </Button>
           
-          {profile?.role === 'admin' && (
-            <Button variant="secondary" size="sm" asChild className="mr-2">
-              <Link to="/super-admin">
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                Panel Admin
-              </Link>
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="text-white hover:bg-white/20">
-            <LogOut className="w-5 h-5" />
-          </Button>
           <Button 
             variant="ghost" size="icon" 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
