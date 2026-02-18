@@ -38,7 +38,7 @@ const Index = () => {
             <Building2 className="text-primary w-6 h-6" />
           </div>
           <div>
-            <h1 className="font-bold text-xl tracking-tight leading-none">GESTION PRO</h1>
+            <h1 className="font-bold text-xl tracking-tight leading-none uppercase">GESTION LOCATIVE PRO sn</h1>
             <p className="text-[10px] opacity-80 uppercase tracking-widest mt-1">Accès Libre</p>
           </div>
         </div>

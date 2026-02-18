@@ -121,7 +121,7 @@ export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
   // --- PIED DE PAGE ---
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  const footerText = `NINEA: ${agency.ninea || '...'} | RCCM: ${agency.rccm || '...'} | Généré par Gestion Pro`;
+  const footerText = `NINEA: ${agency.ninea || '...'} | RCCM: ${agency.rccm || '...'} | Généré par GESTION LOCATIVE PRO sn`;
   doc.text(footerText, 105, 155, { align: 'center' });
   
   // Zone de signature
