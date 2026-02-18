@@ -6,7 +6,9 @@ import { RentalContractsManager } from '../components/RentalContractsManager';
 import { SaleContractsManager } from '../components/SaleContractsManager';
 import { useLocalStorage } from '../hooks/use-local-storage';
 import { Vehicle, Client, RentalContract, SaleContract } from '../types/automobile';
-import { Car, Users, FileText, DollarSign } from 'lucide-react';
+import { Car, Users, FileText, DollarSign, Building2, ArrowLeft } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const AutomobileManagement = () => {
   const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('automobile_vehicles', []);
@@ -19,8 +21,8 @@ const AutomobileManagement = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <div className="bg-primary p-3 rounded-xl">
               <Car className="text-white w-8 h-8" />
             </div>
@@ -29,6 +31,13 @@ const AutomobileManagement = () => {
               <p className="text-muted-foreground">Gestion complète de votre flotte de véhicules</p>
             </div>
           </div>
+          
+          <Button variant="outline" asChild className="w-fit">
+            <Link to="/">
+              <Building2 className="w-4 h-4 mr-2" />
+              Gestion Locative
+            </Link>
+          </Button>
         </header>
 
         <Tabs defaultValue="vehicles" className="w-full">

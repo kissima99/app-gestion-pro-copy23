@@ -78,6 +78,13 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild className="mr-2 border-white/20 text-white hover:bg-white/10">
+            <Link to="/automobile">
+              <Car className="w-4 h-4 mr-2" />
+              Automobile
+            </Link>
+          </Button>
+          
           {profile?.role === 'admin' && (
             <Button variant="secondary" size="sm" asChild className="mr-2">
               <Link to="/super-admin">
