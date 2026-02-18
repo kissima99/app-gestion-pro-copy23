@@ -78,13 +78,28 @@ const Index = () => {
                 <TabsTrigger value="arrears" className="font-bold">Impayés</TabsTrigger>
               </TabsList>
               <TabsContent value="tenants_list">
-                <TenantManager tenants={tenantsData.data} setTenants={() => {}} owners={ownersData.data} />
+                <TenantManager 
+                  tenants={tenantsData.data} 
+                  onAdd={tenantsData.addItem} 
+                  onDelete={tenantsData.deleteItem} 
+                  owners={ownersData.data} 
+                />
               </TabsContent>
               <TabsContent value="owners_list">
-                <OwnerManager owners={ownersData.data} onAdd={ownersData.addItem} onDelete={ownersData.deleteItem} />
+                <OwnerManager 
+                  owners={ownersData.data} 
+                  onAdd={ownersData.addItem} 
+                  onDelete={ownersData.deleteItem} 
+                />
               </TabsContent>
               <TabsContent value="arrears">
-                <ArrearsManager tenants={tenantsData.data} receipts={receiptsData.data} manualArrears={arrearsData.data} setManualArrears={() => {}} />
+                <ArrearsManager 
+                  tenants={tenantsData.data} 
+                  receipts={receiptsData.data} 
+                  manualArrears={arrearsData.data} 
+                  onAdd={arrearsData.addItem} 
+                  onDelete={arrearsData.deleteItem} 
+                />
               </TabsContent>
             </Tabs>
           </TabsContent>
@@ -95,7 +110,12 @@ const Index = () => {
                 <Wrench className="w-6 h-6 text-primary" />
                 <h2 className="text-2xl font-bold">Gestion des Dépenses & Travaux</h2>
               </div>
-              <ExpenseManager expenses={expensesData.data} setExpenses={() => {}} owners={ownersData.data} />
+              <ExpenseManager 
+                expenses={expensesData.data} 
+                onAdd={expensesData.addItem} 
+                onDelete={expensesData.deleteItem} 
+                owners={ownersData.data} 
+              />
             </div>
           </TabsContent>
 
@@ -103,7 +123,8 @@ const Index = () => {
             <MonthlySummary receipts={receiptsData.data} expenses={expensesData.data} agency={agency} />
             <ReceiptManager 
               receipts={receiptsData.data} 
-              setReceipts={() => {}} 
+              onAdd={receiptsData.addItem} 
+              onDelete={receiptsData.deleteItem} 
               tenants={tenantsData.data} 
               owners={ownersData.data}
               expenses={expensesData.data}

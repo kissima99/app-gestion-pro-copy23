@@ -12,10 +12,11 @@ interface Props {
   tenants: Tenant[];
   receipts: Receipt[];
   manualArrears: Arrear[];
-  setManualArrears: (arrears: Arrear[]) => void;
+  onAdd: (arrear: any) => Promise<any>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArrears }: Props) => {
+export const ArrearsManager = ({ tenants, receipts, manualArrears, onAdd, onDelete }: Props) => {
   const today = new Date();
   const currentDay = today.getDate();
   const currentMonth = today.getMonth();
@@ -27,10 +28,9 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArre
 
   const activeTenants = tenants.filter(t => t.status === 'active');
   
-  // Détection automatique avec période de grâce (10 du mois)
   const autoArrears = activeTenants.map(tenant => {
     const hasPaidThisMonth = receipts.some(r => {
-      const payDate = new Date(r.periodStart);
+      const payDate = new Date(r.paymentDate);
       return r.tenantId === tenant.id && 
              payDate.getMonth() === currentMonth && 
              payDate.getFullYear() === currentYear;
@@ -44,31 +44,24 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArre
   const lates = autoArrears.filter(a => a.status === 'late');
   const pendings = autoArrears.filter(a => a.status === 'pending');
 
-  const addManualArrear = () => {
+  const handleAdd = async () => {
     const tenant = tenants.find(t => t.id === newArrear.tenantId);
     if (!tenant || !newArrear.amount) return;
 
-    const arrear: Arrear = {
-      id: Date.now().toString(),
+    await onAdd({
       tenantId: tenant.id,
       tenantName: `${tenant.firstName} ${tenant.lastName}`,
       amount: Number(newArrear.amount),
       month: newArrear.month || '',
       description: newArrear.description || 'Impayé manuel',
       dateAdded: new Date().toISOString().split('T')[0]
-    };
+    });
 
-    setManualArrears([arrear, ...manualArrears]);
     setNewArrear({ tenantId: '', amount: 0, month: '', description: '' });
-  };
-
-  const deleteArrear = (id: string) => {
-    setManualArrears(manualArrears.filter(a => a.id !== id));
   };
 
   return (
     <div className="space-y-8">
-      {/* Section 1: Détection Automatique */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="border-red-200 bg-red-50/30">
           <CardHeader>
@@ -126,7 +119,6 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArre
         </Card>
       </div>
 
-      {/* Section 2: Saisie Manuelle des Arriérés */}
       <Card className="border-primary/20 shadow-lg">
         <CardHeader className="bg-primary/5">
           <CardTitle className="flex items-center gap-2">
@@ -136,7 +128,7 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArre
         <CardContent className="p-6 grid gap-4 md:grid-cols-4 items-end">
           <div className="space-y-2">
             <Label>Locataire</Label>
-            <Select onValueChange={(v) => setNewArrear({...newArrear, tenantId: v})}>
+            <Select onValueChange={(v) => setNewArrear({...newArrear, tenantId: v})} value={newArrear.tenantId}>
               <SelectTrigger>
                 <SelectValue placeholder="Choisir..." />
               </SelectTrigger>
@@ -155,13 +147,12 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArre
             <Label>Mois / Motif</Label>
             <Input placeholder="Ex: Reliquat Janvier" value={newArrear.description} onChange={e => setNewArrear({...newArrear, description: e.target.value})} />
           </div>
-          <Button onClick={addManualArrear} className="w-full">
+          <Button onClick={handleAdd} className="w-full">
             <Plus className="w-4 h-4 mr-2" /> Enregistrer
           </Button>
         </CardContent>
       </Card>
 
-      {/* Section 3: Liste des Arriérés Manuels */}
       <div className="space-y-4">
         <h3 className="font-bold text-lg flex items-center gap-2">
           <Wallet className="w-5 h-5 text-primary" /> Historique des Dettes & Arriérés
@@ -190,7 +181,7 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, setManualArre
                     <td className="p-4">{a.description}</td>
                     <td className="p-4 text-red-600 font-black">{a.amount.toLocaleString()} FCFA</td>
                     <td className="p-4 text-right">
-                      <Button size="icon" variant="ghost" onClick={() => deleteArrear(a.id)}>
+                      <Button size="icon" variant="ghost" onClick={() => onDelete(a.id!)}>
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </td>

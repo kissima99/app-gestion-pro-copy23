@@ -6,18 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Receipt, Tenant, Owner, Expense, Agency } from '../types/rental';
 import { generateReceiptPDF } from '../lib/pdf-service';
-import { Receipt as ReceiptIcon, Download, TrendingUp, Wallet, User } from 'lucide-react';
+import { Receipt as ReceiptIcon, Download, TrendingUp, Wallet, User, Trash2 } from 'lucide-react';
 
 interface Props {
   receipts: Receipt[];
-  setReceipts: (receipts: Receipt[]) => void;
+  onAdd: (receipt: any) => Promise<any>;
+  onDelete: (id: string) => Promise<void>;
   tenants: Tenant[];
   owners: Owner[];
   expenses: Expense[];
   agency: Agency;
 }
 
-export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expenses, agency }: Props) => {
+export const ReceiptManager = ({ receipts, onAdd, onDelete, tenants, owners, expenses, agency }: Props) => {
   const [amountInput, setAmountInput] = useState('');
   const [newReceipt, setNewReceipt] = useState<Partial<Receipt>>({
     periodStart: '', periodEnd: '', paymentDate: new Date().toISOString().split('T')[0]
@@ -28,7 +29,6 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
     return new Intl.NumberFormat('fr-FR').format(amount);
   };
 
-  // Fonction pour lier automatiquement le loyer
   const handleTenantChange = (id: string) => {
     setSelectedTenantId(id);
     const tenant = tenants.find(t => t.id === id);
@@ -37,7 +37,7 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
     }
   };
 
-  const createReceipt = () => {
+  const createReceipt = async () => {
     const tenant = tenants.find(t => t.id === selectedTenantId);
     const owner = owners.find(o => o.id === tenant?.ownerId);
     const numericAmount = parseInt(amountInput.replace(/[^0-9]/g, ''), 10);
@@ -47,25 +47,25 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
       return;
     }
 
-    const receipt: Receipt = {
-      ...newReceipt as Receipt,
-      id: Date.now().toString(),
+    const receiptData = {
+      ...newReceipt,
       receiptNumber: `Q-${Date.now().toString().slice(-6)}`,
       tenantId: tenant.id,
       tenantName: `${tenant.firstName} ${tenant.lastName}`,
       unitName: tenant.unitName,
       propertyAddress: owner.address,
       amount: numericAmount,
-      ownerId: owner.id // Liaison CRITIQUE pour le bilan par propriétaire
+      ownerId: owner.id
     };
 
-    setReceipts([receipt, ...receipts]);
-    generateReceiptPDF(receipt);
-    setAmountInput(''); 
-    setSelectedTenantId('');
+    const result = await onAdd(receiptData);
+    if (result) {
+      generateReceiptPDF(result);
+      setAmountInput(''); 
+      setSelectedTenantId('');
+    }
   };
 
-  // Calcul du bilan pour le propriétaire du locataire sélectionné
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);
   const selectedOwner = owners.find(o => o.id === selectedTenant?.ownerId);
   
@@ -133,7 +133,7 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Montant du loyer (FCFA) - <span className="text-primary font-bold">Auto</span></Label>
+            <Label>Montant du loyer (FCFA)</Label>
             <Input 
               type="text" 
               inputMode="numeric"
@@ -175,9 +175,12 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
                     <td className="p-3 font-medium">{r.receiptNumber}</td>
                     <td className="p-3">{r.tenantName}</td>
                     <td className="p-3 font-bold">{formatFCFA(Number(r.amount))} FCFA</td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right flex justify-end gap-2">
                       <Button size="icon" variant="ghost" onClick={() => generateReceiptPDF(r)}>
                         <Download className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => onDelete(r.id!)}>
+                        <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </td>
                   </tr>

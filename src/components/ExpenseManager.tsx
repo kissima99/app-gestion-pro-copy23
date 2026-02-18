@@ -5,35 +5,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Expense, Owner } from '../types/rental';
-import { Wrench, Trash2, Plus, User } from 'lucide-react';
+import { Wrench, Trash2, Plus } from 'lucide-react';
 
 interface Props {
   expenses: Expense[];
-  setExpenses: (expenses: Expense[]) => void;
+  onAdd: (expense: any) => Promise<any>;
+  onDelete: (id: string) => Promise<void>;
   owners: Owner[];
 }
 
-export const ExpenseManager = ({ expenses, setExpenses, owners }: Props) => {
+export const ExpenseManager = ({ expenses, onAdd, onDelete, owners }: Props) => {
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({
     description: '', amount: 0, date: new Date().toISOString().split('T')[0], category: 'autre', ownerId: ''
   });
 
-  const addExpense = () => {
+  const handleAdd = async () => {
     if (!newExpense.description || !newExpense.amount || !newExpense.ownerId) {
       alert("Veuillez remplir tous les champs, y compris le propriétaire.");
       return;
     }
-    const expense: Expense = {
-      ...newExpense as Expense,
-      id: Date.now().toString(),
+    
+    await onAdd({
+      ...newExpense,
       amount: Number(newExpense.amount)
-    };
-    setExpenses([expense, ...expenses]);
-    setNewExpense({ description: '', amount: 0, date: new Date().toISOString().split('T')[0], category: 'autre', ownerId: '' });
-  };
+    });
 
-  const deleteExpense = (id: string) => {
-    setExpenses(expenses.filter(e => e.id !== id));
+    setNewExpense({ description: '', amount: 0, date: new Date().toISOString().split('T')[0], category: 'autre', ownerId: '' });
   };
 
   return (
@@ -68,7 +65,7 @@ export const ExpenseManager = ({ expenses, setExpenses, owners }: Props) => {
           </div>
           <div className="space-y-2">
             <Label>Catégorie</Label>
-            <Select onValueChange={(v: any) => setNewExpense({...newExpense, category: v})}>
+            <Select onValueChange={(v: any) => setNewExpense({...newExpense, category: v})} value={newExpense.category}>
               <SelectTrigger>
                 <SelectValue placeholder="Catégorie" />
               </SelectTrigger>
@@ -79,7 +76,7 @@ export const ExpenseManager = ({ expenses, setExpenses, owners }: Props) => {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={addExpense} className="w-full">
+          <Button onClick={handleAdd} className="w-full">
             <Plus className="w-4 h-4 mr-2" /> Ajouter
           </Button>
         </CardContent>
@@ -106,7 +103,7 @@ export const ExpenseManager = ({ expenses, setExpenses, owners }: Props) => {
                   <td className="p-3">{e.description}</td>
                   <td className="p-3 text-red-600">-{e.amount.toLocaleString()} FCFA</td>
                   <td className="p-3 text-right">
-                    <Button size="icon" variant="ghost" onClick={() => deleteExpense(e.id)}>
+                    <Button size="icon" variant="ghost" onClick={() => onDelete(e.id!)}>
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
                   </td>

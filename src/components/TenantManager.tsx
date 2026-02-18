@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 
 interface Props {
   tenants: Tenant[];
-  setTenants: (tenants: Tenant[]) => void;
+  onAdd: (tenant: any) => Promise<any>;
+  onDelete: (id: string) => Promise<void>;
   owners: Owner[];
 }
 
@@ -24,35 +25,27 @@ const UNIT_TYPES = [
   "Villa"
 ];
 
-export const TenantManager = ({ tenants, setTenants, owners }: Props) => {
+export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [newTenant, setNewTenant] = useState<Partial<Tenant>>({
     firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, status: 'active', ownerId: ''
   });
 
-  const addTenant = () => {
+  const handleAdd = async () => {
     if (!newTenant.firstName || !newTenant.lastName || !newTenant.unitName || !newTenant.ownerId) {
       alert("Veuillez remplir tous les champs obligatoires, y compris le propriétaire.");
       return;
     }
-    const tenant: Tenant = {
-      ...newTenant as Tenant,
-      id: Date.now().toString(),
+    
+    await onAdd({
+      ...newTenant,
       status: 'active',
       startDate: new Date().toISOString().split('T')[0],
       rentAmount: Number(newTenant.rentAmount) || 0,
       roomsCount: Number(newTenant.roomsCount) || 1
-    };
-    setTenants([...tenants, tenant]);
+    });
+
     setNewTenant({ firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, ownerId: '' });
-  };
-
-  const terminateLease = (id: string) => {
-    setTenants(tenants.map(t => t.id === id ? { ...t, status: 'terminated' } : t));
-  };
-
-  const deleteTenant = (id: string) => {
-    setTenants(tenants.filter(t => t.id !== id));
   };
 
   const filteredTenants = tenants.filter(t => 
@@ -70,7 +63,7 @@ export const TenantManager = ({ tenants, setTenants, owners }: Props) => {
         <CardContent className="p-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <Label>Propriétaire du logement</Label>
-            <Select onValueChange={(v) => setNewTenant({...newTenant, ownerId: v})}>
+            <Select onValueChange={(v) => setNewTenant({...newTenant, ownerId: v})} value={newTenant.ownerId}>
               <SelectTrigger>
                 <SelectValue placeholder="Choisir le propriétaire" />
               </SelectTrigger>
@@ -99,7 +92,7 @@ export const TenantManager = ({ tenants, setTenants, owners }: Props) => {
           </div>
           <div className="space-y-2">
             <Label>Local occupé</Label>
-            <Select onValueChange={(v) => setNewTenant({...newTenant, unitName: v})}>
+            <Select onValueChange={(v) => setNewTenant({...newTenant, unitName: v})} value={newTenant.unitName}>
               <SelectTrigger>
                 <SelectValue placeholder="Choisir le local" />
               </SelectTrigger>
@@ -122,7 +115,7 @@ export const TenantManager = ({ tenants, setTenants, owners }: Props) => {
             <Label>Montant du loyer (FCFA)</Label>
             <Input type="number" value={newTenant.rentAmount} onChange={e => setNewTenant({...newTenant, rentAmount: Number(e.target.value)})} />
           </div>
-          <Button onClick={addTenant} className="md:col-span-2 lg:col-span-3 mt-2">Ajouter le locataire</Button>
+          <Button onClick={handleAdd} className="md:col-span-2 lg:col-span-3 mt-2">Ajouter le locataire</Button>
         </CardContent>
       </Card>
 
@@ -166,12 +159,7 @@ export const TenantManager = ({ tenants, setTenants, owners }: Props) => {
                   <Button size="sm" variant="outline" onClick={() => owner && generateLeasePDF(owner, tenant)}>
                     <FileText className="w-4 h-4 mr-1" /> Bail PDF
                   </Button>
-                  {tenant.status === 'active' && (
-                    <Button size="sm" variant="secondary" onClick={() => terminateLease(tenant.id)}>
-                      <UserMinus className="w-4 h-4 mr-1" /> Résilier
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => deleteTenant(tenant.id)}>
+                  <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => onDelete(tenant.id!)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
