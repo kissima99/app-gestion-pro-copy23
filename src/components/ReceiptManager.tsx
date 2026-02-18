@@ -56,7 +56,7 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
       unitName: tenant.unitName,
       propertyAddress: owner.address,
       amount: numericAmount,
-      ownerId: owner.id
+      ownerId: owner.id // Liaison CRITIQUE pour le bilan par propriétaire
     };
 
     setReceipts([receipt, ...receipts]);
@@ -69,10 +69,7 @@ export const ReceiptManager = ({ receipts, setReceipts, tenants, owners, expense
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);
   const selectedOwner = owners.find(o => o.id === selectedTenant?.ownerId);
   
-  const ownerReceipts = receipts.filter(r => {
-    const t = tenants.find(ten => ten.id === r.tenantId);
-    return t?.ownerId === selectedOwner?.id;
-  });
+  const ownerReceipts = receipts.filter(r => r.ownerId === selectedOwner?.id);
   const ownerExpenses = expenses.filter(e => e.ownerId === selectedOwner?.id);
   
   const totalOwnerCollected = ownerReceipts.reduce((acc, curr) => acc + Number(curr.amount), 0);

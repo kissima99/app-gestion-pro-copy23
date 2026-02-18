@@ -12,7 +12,7 @@ import { DataManagement } from '../components/DataManagement';
 import { useSupabaseData } from '../hooks/use-supabase-data';
 import { useLocalStorage } from '../hooks/use-local-storage';
 import { Owner, Tenant, Receipt, Expense, Agency, Arrear } from '../types/rental';
-import { Users, Moon, Sun, Building2, Wallet, Car, LogOut, ShieldCheck } from 'lucide-react';
+import { Users, Moon, Sun, Building2, Wallet, Car, LogOut, ShieldCheck, BarChart3 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useNavigate, Link } from "react-router-dom";
@@ -78,10 +78,11 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild className="mr-2 border-white/20 text-white hover:bg-white/10">
+          {/* Bouton Automobile mis en évidence */}
+          <Button variant="secondary" size="sm" asChild className="mr-2 bg-amber-500 hover:bg-amber-600 text-white border-none shadow-md animate-pulse hover:animate-none">
             <Link to="/automobile">
               <Car className="w-4 h-4 mr-2" />
-              Automobile
+              ACCÈS AUTOMOBILE
             </Link>
           </Button>
           
@@ -108,10 +109,11 @@ const Index = () => {
 
       <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-8">
         <Tabs defaultValue="locative" className="w-full">
-          <TabsList className="grid grid-cols-3 w-full md:w-[600px] bg-muted p-1 rounded-2xl mb-8">
-            <TabsTrigger value="locative" className="rounded-xl">GESTION LOCATIVE</TabsTrigger>
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full bg-muted p-1 rounded-2xl mb-8">
+            <TabsTrigger value="locative" className="rounded-xl">LOCATIF</TabsTrigger>
             <TabsTrigger value="finances" className="rounded-xl">FINANCES</TabsTrigger>
-            <TabsTrigger value="admin" className="rounded-xl">ADMINISTRATION</TabsTrigger>
+            <TabsTrigger value="bilan_proprios" className="rounded-xl">BILAN PROPRIOS</TabsTrigger>
+            <TabsTrigger value="admin" className="rounded-xl">ADMIN</TabsTrigger>
           </TabsList>
 
           <TabsContent value="locative" className="space-y-6">
@@ -119,6 +121,7 @@ const Index = () => {
               <TabsList className="bg-transparent border-b w-full justify-start gap-6 mb-6">
                 <TabsTrigger value="tenants_list" className="font-bold">Locataires</TabsTrigger>
                 <TabsTrigger value="owners_list" className="font-bold">Propriétaires</TabsTrigger>
+                <TabsTrigger value="arrears" className="font-bold">Impayés</TabsTrigger>
               </TabsList>
               <TabsContent value="tenants_list">
                 <TenantManager tenants={tenantsData.data} setTenants={() => {}} owners={ownersData.data} />
@@ -126,12 +129,20 @@ const Index = () => {
               <TabsContent value="owners_list">
                 <OwnerManager owners={ownersData.data} setOwners={() => {}} />
               </TabsContent>
+              <TabsContent value="arrears">
+                <ArrearsManager 
+                  tenants={tenantsData.data} 
+                  receipts={receiptsData.data} 
+                  manualArrears={arrearsData.data} 
+                  setManualArrears={() => {}} 
+                />
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="finances">
+          <TabsContent value="finances" className="space-y-8">
             <MonthlySummary receipts={receiptsData.data} expenses={expensesData.data} agency={agency} />
-            <div className="mt-8">
+            <div className="grid gap-8">
               <ReceiptManager 
                 receipts={receiptsData.data} 
                 setReceipts={() => {}} 
@@ -140,7 +151,22 @@ const Index = () => {
                 expenses={expensesData.data}
                 agency={agency}
               />
+              <ExpenseManager 
+                expenses={expensesData.data} 
+                setExpenses={() => {}} 
+                owners={ownersData.data} 
+              />
             </div>
+          </TabsContent>
+
+          <TabsContent value="bilan_proprios">
+            <OwnerFinanceSummary 
+              owners={ownersData.data} 
+              tenants={tenantsData.data} 
+              receipts={receiptsData.data} 
+              expenses={expensesData.data} 
+              agency={agency} 
+            />
           </TabsContent>
 
           <TabsContent value="admin">
