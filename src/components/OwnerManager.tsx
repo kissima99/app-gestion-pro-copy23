@@ -8,26 +8,19 @@ import { UserPlus, Trash2, Phone, MapPin, User } from 'lucide-react';
 
 interface Props {
   owners: Owner[];
-  setOwners: (owners: Owner[]) => void;
+  onAdd: (owner: any) => Promise<any>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export const OwnerManager = ({ owners, setOwners }: Props) => {
+export const OwnerManager = ({ owners, onAdd, onDelete }: Props) => {
   const [newOwner, setNewOwner] = useState<Partial<Owner>>({
-    firstName: '', lastName: '', address: '', telephone: '', commissionRate: 0
+    firstName: '', lastName: '', address: '', telephone: '', commissionRate: 10
   });
 
-  const addOwner = () => {
+  const handleAdd = async () => {
     if (!newOwner.firstName || !newOwner.lastName) return;
-    const owner: Owner = {
-      ...newOwner as Owner,
-      id: Date.now().toString()
-    };
-    setOwners([...owners, owner]);
-    setNewOwner({ firstName: '', lastName: '', address: '', telephone: '', commissionRate: 0 });
-  };
-
-  const deleteOwner = (id: string) => {
-    setOwners(owners.filter(o => o.id !== id));
+    await onAdd(newOwner);
+    setNewOwner({ firstName: '', lastName: '', address: '', telephone: '', commissionRate: 10 });
   };
 
   return (
@@ -71,7 +64,7 @@ export const OwnerManager = ({ owners, setOwners }: Props) => {
               placeholder="+221 ..."
             />
           </div>
-          <Button onClick={addOwner} className="md:col-span-2">Enregistrer le propriétaire</Button>
+          <Button onClick={handleAdd} className="md:col-span-2">Enregistrer le propriétaire</Button>
         </CardContent>
       </Card>
 
@@ -89,7 +82,7 @@ export const OwnerManager = ({ owners, setOwners }: Props) => {
                     <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {owner.telephone}</p>
                   </div>
                 </div>
-                <Button size="icon" variant="ghost" onClick={() => deleteOwner(owner.id)}>
+                <Button size="icon" variant="ghost" onClick={() => onDelete(owner.id)}>
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
               </div>

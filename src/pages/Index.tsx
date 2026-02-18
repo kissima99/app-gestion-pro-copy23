@@ -66,7 +66,7 @@ const Index = () => {
           <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full bg-muted p-1 rounded-2xl mb-8">
             <TabsTrigger value="locative" className="rounded-xl">LOCATIF</TabsTrigger>
             <TabsTrigger value="finances" className="rounded-xl">FINANCES</TabsTrigger>
-            <TabsTrigger value="bilan_proprios" className="rounded-xl">BILAN PROPRIOS</TabsTrigger>
+            <TabsTrigger value="bilan_proprios" className="rounded-xl">Bilan par Propriétaire</TabsTrigger>
             <TabsTrigger value="admin" className="rounded-xl">ADMIN</TabsTrigger>
           </TabsList>
 
@@ -78,10 +78,18 @@ const Index = () => {
                 <TabsTrigger value="arrears" className="font-bold">Impayés</TabsTrigger>
               </TabsList>
               <TabsContent value="tenants_list">
-                <TenantManager tenants={tenantsData.data} setTenants={() => {}} owners={ownersData.data} />
+                <TenantManager 
+                  tenants={tenantsData.data} 
+                  setTenants={() => {}} // À mettre à jour si besoin de fonctions spécifiques
+                  owners={ownersData.data} 
+                />
               </TabsContent>
               <TabsContent value="owners_list">
-                <OwnerManager owners={ownersData.data} setOwners={() => {}} />
+                <OwnerManager 
+                  owners={ownersData.data} 
+                  onAdd={ownersData.addItem} 
+                  onDelete={ownersData.deleteItem} 
+                />
               </TabsContent>
               <TabsContent value="arrears">
                 <ArrearsManager 
@@ -99,7 +107,11 @@ const Index = () => {
             <div className="grid gap-8">
               <ReceiptManager 
                 receipts={receiptsData.data} 
-                setReceipts={() => {}} 
+                setReceipts={(newReceipts) => {
+                  // La logique d'ajout est gérée à l'intérieur du composant via createReceipt
+                  // On passe addItem pour la persistance
+                  receiptsData.addItem(newReceipts[0]);
+                }} 
                 tenants={tenantsData.data} 
                 owners={ownersData.data}
                 expenses={expensesData.data}
@@ -107,7 +119,9 @@ const Index = () => {
               />
               <ExpenseManager 
                 expenses={expensesData.data} 
-                setExpenses={() => {}} 
+                setExpenses={(newExpenses) => {
+                  expensesData.addItem(newExpenses[0]);
+                }} 
                 owners={ownersData.data} 
               />
             </div>
