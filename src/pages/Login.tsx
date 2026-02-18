@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,14 +7,27 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, Sparkles, ArrowRight, UserPlus, Building2 } from 'lucide-react';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [useMagicLink, setUseMagicLink] = useState(false);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Rediriger si déjà connecté
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/');
+      }
+    };
+    checkSession();
+  }, [navigate]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +57,13 @@ const Login = () => {
           }
         });
         if (error) throw error;
-        toast.success("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
-        setIsSignUp(false);
+        toast.success("Compte créé avec succès !");
+        navigate('/');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Connexion réussie !");
+        navigate('/');
       }
     } catch (error: any) {
       toast.error(error.message);
