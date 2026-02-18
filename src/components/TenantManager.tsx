@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, FileText, UserMinus, Trash2, Home, User } from 'lucide-react';
+import { Search, UserPlus, FileText, Trash2, Home, User, Loader2 } from 'lucide-react';
 import { Tenant, Owner } from '../types/rental';
 import { generateLeasePDF } from '../lib/pdf-service';
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface Props {
   tenants: Tenant[];
@@ -16,36 +17,37 @@ interface Props {
   owners: Owner[];
 }
 
-const UNIT_TYPES = [
-  "Appartement",
-  "Studio",
-  "Chambre",
-  "Magasin",
-  "Bureau",
-  "Villa"
-];
+const UNIT_TYPES = ["Appartement", "Studio", "Chambre", "Magasin", "Bureau", "Villa"];
 
 export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newTenant, setNewTenant] = useState<Partial<Tenant>>({
     firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, status: 'active', ownerId: ''
   });
 
   const handleAdd = async () => {
     if (!newTenant.firstName || !newTenant.lastName || !newTenant.unitName || !newTenant.ownerId) {
-      alert("Veuillez remplir tous les champs obligatoires, y compris le propriétaire.");
+      toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
     }
     
-    await onAdd({
-      ...newTenant,
-      status: 'active',
-      startDate: new Date().toISOString().split('T')[0],
-      rentAmount: Number(newTenant.rentAmount) || 0,
-      roomsCount: Number(newTenant.roomsCount) || 1
-    });
+    try {
+      setIsSubmitting(true);
+      const result = await onAdd({
+        ...newTenant,
+        status: 'active',
+        startDate: new Date().toISOString().split('T')[0],
+        rentAmount: Number(newTenant.rentAmount) || 0,
+        roomsCount: Number(newTenant.roomsCount) || 1
+      });
 
-    setNewTenant({ firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, ownerId: '' });
+      if (result) {
+        setNewTenant({ firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, ownerId: '' });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredTenants = tenants.filter(t => 
@@ -115,7 +117,9 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
             <Label>Montant du loyer (FCFA)</Label>
             <Input type="number" value={newTenant.rentAmount} onChange={e => setNewTenant({...newTenant, rentAmount: Number(e.target.value)})} />
           </div>
-          <Button onClick={handleAdd} className="md:col-span-2 lg:col-span-3 mt-2">Ajouter le locataire</Button>
+          <Button onClick={handleAdd} className="md:col-span-2 lg:col-span-3 mt-2" disabled={isSubmitting}>
+            {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</> : "Ajouter le locataire"}
+          </Button>
         </CardContent>
       </Card>
 
