@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import AutomobileManagement from "./pages/AutomobileManagement";
-import Payment from "./pages/Payment";
 import SuperAdmin from "./pages/SuperAdmin";
 import NotFound from "./pages/NotFound";
 
@@ -23,7 +22,6 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/automobile" element={<AutomobileManagement />} />
-              <Route path="/payment" element={<Payment />} />
               <Route path="/super-admin" element={<SuperAdmin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
