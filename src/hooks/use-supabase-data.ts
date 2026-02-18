@@ -2,6 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Utilitaires pour la conversion de casse
+const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+const toCamelCase = (str: string) => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
+const mapKeys = (obj: any, fn: (key: string) => string) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  return Object.keys(obj).reduce((acc, key) => {
+    acc[fn(key)] = obj[key];
+    return acc;
+  }, {} as any);
+};
+
 export function useSupabaseData<T extends { id?: string }>(tableName: string) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,9 +27,12 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setData(result || []);
+      
+      // Mapper les résultats vers camelCase pour le frontend
+      const mappedData = (result || []).map(item => mapKeys(item, toCamelCase));
+      setData(mappedData);
     } catch (error: any) {
-      console.error(`Error fetching ${tableName}:`, error);
+      console.error(`[useSupabaseData] Error fetching ${tableName}:`, error);
     } finally {
       setLoading(false);
     }
@@ -29,34 +44,29 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
 
   const addItem = async (item: any) => {
     try {
+      // Récupérer l'utilisateur actuel pour le user_id
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Mapper vers snake_case pour la DB et injecter user_id
+      const dbItem = mapKeys(item, toSnakeCase);
+      if (user) dbItem.user_id = user.id;
+
       const { data: result, error } = await supabase
         .from(tableName)
-        .insert([item])
+        .insert([dbItem])
         .select();
 
       if (error) throw error;
-      setData(prev => [result[0], ...prev]);
+      
+      const newItem = mapKeys(result[0], toCamelCase);
+      setData(prev => [newItem, ...prev]);
       toast.success("Ajouté avec succès");
-      return result[0];
+      return newItem;
     } catch (error: any) {
-      toast.error("Erreur lors de l'ajout");
-      throw error;
-    }
-  };
-
-  const updateItem = async (id: string, updates: any) => {
-    try {
-      const { error } = await supabase
-        .from(tableName)
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
-      setData(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
-      toast.success("Mis à jour");
-    } catch (error: any) {
-      toast.error("Erreur lors de la mise à jour");
-      throw error;
+      const msg = error.message || "Erreur lors de l'ajout";
+      console.error(`[useSupabaseData] Add error in ${tableName}:`, error);
+      toast.error(msg);
+      return null;
     }
   };
 
@@ -71,10 +81,11 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
       setData(prev => prev.filter(item => item.id !== id));
       toast.success("Supprimé");
     } catch (error: any) {
-      toast.error("Erreur lors de la suppression");
-      throw error;
+      const msg = error.message || "Erreur lors de la suppression";
+      console.error(`[useSupabaseData] Delete error in ${tableName}:`, error);
+      toast.error(msg);
     }
   };
 
-  return { data, setData, loading, addItem, updateItem, deleteItem, refresh: fetchData };
+  return { data, setData, loading, addItem, deleteItem, refresh: fetchData };
 }

@@ -80,7 +80,7 @@ const Index = () => {
               <TabsContent value="tenants_list">
                 <TenantManager 
                   tenants={tenantsData.data} 
-                  setTenants={() => {}} // À mettre à jour si besoin de fonctions spécifiques
+                  setTenants={() => {}} 
                   owners={ownersData.data} 
                 />
               </TabsContent>
@@ -107,11 +107,7 @@ const Index = () => {
             <div className="grid gap-8">
               <ReceiptManager 
                 receipts={receiptsData.data} 
-                setReceipts={(newReceipts) => {
-                  // La logique d'ajout est gérée à l'intérieur du composant via createReceipt
-                  // On passe addItem pour la persistance
-                  receiptsData.addItem(newReceipts[0]);
-                }} 
+                setReceipts={() => {}} 
                 tenants={tenantsData.data} 
                 owners={ownersData.data}
                 expenses={expensesData.data}
@@ -119,9 +115,7 @@ const Index = () => {
               />
               <ExpenseManager 
                 expenses={expensesData.data} 
-                setExpenses={(newExpenses) => {
-                  expensesData.addItem(newExpenses[0]);
-                }} 
+                setExpenses={() => {}} 
                 owners={ownersData.data} 
               />
             </div>
