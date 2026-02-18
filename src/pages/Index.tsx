@@ -62,20 +62,20 @@ const Index = () => {
 
       <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-8">
         <Tabs defaultValue="locative" className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full bg-muted p-1 rounded-2xl mb-8">
-            <TabsTrigger value="locative" className="rounded-xl">LOCATIF</TabsTrigger>
-            <TabsTrigger value="expenses_tab" className="rounded-xl">DÉPENSES</TabsTrigger>
-            <TabsTrigger value="finances" className="rounded-xl">QUITTANCES</TabsTrigger>
-            <TabsTrigger value="bilan_proprios" className="rounded-xl">Bilan par Propriétaire</TabsTrigger>
-            <TabsTrigger value="admin" className="rounded-xl">ADMIN</TabsTrigger>
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full bg-muted p-1.5 rounded-2xl mb-8 shadow-inner">
+            <TabsTrigger value="locative" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold">LOCATIF</TabsTrigger>
+            <TabsTrigger value="expenses_tab" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold">DÉPENSES</TabsTrigger>
+            <TabsTrigger value="finances" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold">QUITTANCES</TabsTrigger>
+            <TabsTrigger value="bilan_proprios" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold">BILANS</TabsTrigger>
+            <TabsTrigger value="admin" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold">ADMIN</TabsTrigger>
           </TabsList>
 
           <TabsContent value="locative" className="space-y-6">
             <Tabs defaultValue="tenants_list">
-              <TabsList className="bg-transparent border-b w-full justify-start gap-6 mb-6">
-                <TabsTrigger value="tenants_list" className="font-bold">Locataires</TabsTrigger>
-                <TabsTrigger value="owners_list" className="font-bold">Propriétaires</TabsTrigger>
-                <TabsTrigger value="arrears" className="font-bold">Impayés</TabsTrigger>
+              <TabsList className="bg-transparent border-b w-full justify-start gap-8 mb-6">
+                <TabsTrigger value="tenants_list" className="font-black text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none pb-2">Locataires</TabsTrigger>
+                <TabsTrigger value="owners_list" className="font-black text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none pb-2">Propriétaires</TabsTrigger>
+                <TabsTrigger value="arrears" className="font-black text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none pb-2">Impayés</TabsTrigger>
               </TabsList>
               <TabsContent value="tenants_list">
                 <TenantManager 
@@ -106,9 +106,11 @@ const Index = () => {
 
           <TabsContent value="expenses_tab">
             <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Wrench className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold">Gestion des Dépenses & Travaux</h2>
+              <div className="flex items-center gap-3 mb-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                <div className="bg-primary p-2 rounded-lg">
+                  <Wrench className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-black text-primary">Gestion des Dépenses & Travaux</h2>
               </div>
               <ExpenseManager 
                 expenses={expensesData.data} 
@@ -143,7 +145,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="admin">
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className="max-w-2xl mx-auto space-y-8">
               <AgencyForm agency={agency} setAgency={setAgency} />
               <DataManagement />
             </div>

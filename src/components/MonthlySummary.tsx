@@ -26,78 +26,60 @@ export const MonthlySummary = ({ receipts, expenses, agency }: Props) => {
   const totalCollected = monthlyReceipts.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalExpenses = monthlyExpenses.reduce((acc, curr) => acc + curr.amount, 0);
   
-  // Calcul de la commission
   const commissionAmount = (totalCollected * (agency.commissionRate || 0)) / 100;
   const netToOwner = totalCollected - totalExpenses - commissionAmount;
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-green-50 border-green-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-green-700 uppercase">Total Encaissé</p>
-              <h3 className="text-xl font-black text-green-800">{totalCollected.toLocaleString()} FCFA</h3>
+              <p className="text-xs font-black text-green-700 uppercase tracking-wider">Total Encaissé</p>
+              <h3 className="text-2xl font-black text-green-800 mt-1">{totalCollected.toLocaleString()} FCFA</h3>
             </div>
-            <ArrowUpCircle className="w-8 h-8 text-green-500 opacity-50" />
+            <div className="bg-green-100 p-3 rounded-2xl">
+              <ArrowUpCircle className="w-6 h-6 text-green-600" />
+            </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-blue-700 uppercase">Commission Agence ({agency.commissionRate}%)</p>
-              <h3 className="text-xl font-black text-blue-800">{commissionAmount.toLocaleString()} FCFA</h3>
+              <p className="text-xs font-black text-blue-700 uppercase tracking-wider">Commission ({agency.commissionRate}%)</p>
+              <h3 className="text-2xl font-black text-blue-800 mt-1">{commissionAmount.toLocaleString()} FCFA</h3>
             </div>
-            <Percent className="w-8 h-8 text-blue-500 opacity-50" />
+            <div className="bg-blue-100 p-3 rounded-2xl">
+              <Percent className="w-6 h-6 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-red-50 border-red-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-red-700 uppercase">Total Dépenses</p>
-              <h3 className="text-xl font-black text-red-800">{totalExpenses.toLocaleString()} FCFA</h3>
+              <p className="text-xs font-black text-red-700 uppercase tracking-wider">Total Dépenses</p>
+              <h3 className="text-2xl font-black text-red-800 mt-1">{totalExpenses.toLocaleString()} FCFA</h3>
             </div>
-            <ArrowDownCircle className="w-8 h-8 text-red-500 opacity-50" />
+            <div className="bg-red-100 p-3 rounded-2xl">
+              <ArrowDownCircle className="w-6 h-6 text-red-600" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-primary text-primary-foreground">
+        <Card className="bg-primary text-primary-foreground shadow-xl hover:scale-[1.02] transition-transform">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold opacity-80 uppercase">Net à Verser au Propriétaire</p>
-              <h3 className="text-xl font-black">{netToOwner.toLocaleString()} FCFA</h3>
+              <p className="text-xs font-black opacity-80 uppercase tracking-wider">Net Propriétaires</p>
+              <h3 className="text-2xl font-black mt-1">{netToOwner.toLocaleString()} FCFA</h3>
             </div>
-            <Wallet className="w-8 h-8 opacity-30" />
+            <div className="bg-white/20 p-3 rounded-2xl">
+              <Wallet className="w-6 h-6 text-white" />
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PieChart className="w-5 h-5" /> Récapitulatif du Mois
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-              <span className="font-medium">Nombre de quittances émises</span>
-              <span className="font-bold">{monthlyReceipts.length}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-              <span className="font-medium">Nombre de dépenses enregistrées</span>
-              <span className="font-bold">{monthlyExpenses.length}</span>
-            </div>
-            <div className="pt-4 border-t">
-              <p className="text-xs text-muted-foreground italic">
-                Note : Le montant net correspond au total encaissé moins les dépenses et la commission de l'agence.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
