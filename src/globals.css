@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 262 80% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 262 80% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 262 80% 10%;
+
+    /* Violet Primaire */
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 262 30% 96%;
+    --secondary-foreground: 262 80% 20%;
+
+    --muted: 262 30% 96%;
+    --muted-foreground: 262 20% 45%;
+
+    --accent: 262 30% 96%;
+    --accent-foreground: 262 80% 20%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 262 30% 90%;
+    --input: 262 30% 90%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 262 80% 5%;
+    --foreground: 262 20% 98%;
+
+    --card: 262 80% 8%;
+    --card-foreground: 262 20% 98%;
+
+    --popover: 262 80% 8%;
+    --popover-foreground: 262 20% 98%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 262 40% 15%;
+    --secondary-foreground: 262 20% 98%;
+
+    --muted: 262 40% 15%;
+    --muted-foreground: 262 20% 70%;
+
+    --accent: 262 40% 15%;
+    --accent-foreground: 262 20% 98%;
+
+    --border: 262 40% 20%;
+    --input: 262 40% 20%;
+    --ring: 262 83% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
