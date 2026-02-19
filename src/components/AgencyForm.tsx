@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, ShieldCheck, MapPin, Phone, Mail, FileText, Percent } from 'lucide-react';
+import { Building2, ShieldCheck, MapPin, Phone, Mail, User, Percent } from 'lucide-react';
 import { Agency } from '../types/rental';
 
 interface Props {
@@ -39,20 +39,17 @@ export const AgencyForm = ({ agency, setAgency }: Props) => {
                   value={agency.name} 
                   onChange={(e) => setAgency({...agency, name: e.target.value})}
                   placeholder="Ex: Excellence Immobilier"
-                  className="focus-visible:ring-primary"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="agency-commission" className="flex items-center gap-2">
-                  <Percent className="w-4 h-4 text-primary" /> Taux de commission (%)
+                <Label htmlFor="agency-owner" className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" /> Propriétaire de l'Agence
                 </Label>
                 <Input 
-                  id="agency-commission"
-                  type="text"
-                  inputMode="numeric"
-                  value={agency.commissionRate || ''} 
-                  onChange={(e) => setAgency({...agency, commissionRate: Number(e.target.value.replace(/[^0-9]/g, ''))})}
-                  placeholder="Ex: 10"
+                  id="agency-owner"
+                  value={agency.ownerName || ''} 
+                  onChange={(e) => setAgency({...agency, ownerName: e.target.value})}
+                  placeholder="Nom complet du gérant"
                 />
               </div>
             </div>
@@ -66,7 +63,7 @@ export const AgencyForm = ({ agency, setAgency }: Props) => {
                   id="agency-address"
                   value={agency.address} 
                   onChange={(e) => setAgency({...agency, address: e.target.value})}
-                  placeholder="Ex: Avenue Cheikh Anta Diop, Dakar"
+                  placeholder="Ex: Dakar Plateau"
                 />
               </div>
               <div className="space-y-2">
@@ -84,18 +81,6 @@ export const AgencyForm = ({ agency, setAgency }: Props) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="agency-email" className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-primary" /> Email Professionnel
-                </Label>
-                <Input 
-                  id="agency-email"
-                  type="email"
-                  value={agency.email} 
-                  onChange={(e) => setAgency({...agency, email: e.target.value})}
-                  placeholder="contact@agence.com"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="agency-ninea" className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-primary" /> NINEA
                 </Label>
@@ -103,7 +88,19 @@ export const AgencyForm = ({ agency, setAgency }: Props) => {
                   id="agency-ninea"
                   value={agency.ninea} 
                   onChange={(e) => setAgency({...agency, ninea: e.target.value})}
-                  placeholder="Numéro d'identification fiscale"
+                  placeholder="NINEA"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="agency-commission" className="flex items-center gap-2">
+                  <Percent className="w-4 h-4 text-primary" /> Commission (%)
+                </Label>
+                <Input 
+                  id="agency-commission"
+                  type="text"
+                  value={agency.commissionRate || ''} 
+                  onChange={(e) => setAgency({...agency, commissionRate: Number(e.target.value.replace(/[^0-9]/g, ''))})}
+                  placeholder="10"
                 />
               </div>
             </div>

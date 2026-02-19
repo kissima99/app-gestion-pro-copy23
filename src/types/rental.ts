@@ -9,6 +9,7 @@ export interface Owner {
 
 export interface Agency {
   name: string;
+  ownerName?: string; // Nom du propriétaire de l'agence
   address: string;
   phone: string;
   email: string;
@@ -44,12 +45,12 @@ export interface Receipt {
   periodEnd: string;
   unitName: string;
   propertyAddress: string;
-  ownerId?: string; // Ajouté pour faciliter le filtrage
+  ownerId?: string;
 }
 
 export interface Expense {
   id: string;
-  ownerId: string; // Obligatoire pour le bilan par propriétaire
+  ownerId: string;
   description: string;
   amount: number;
   date: string;

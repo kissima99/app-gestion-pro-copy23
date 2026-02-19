@@ -12,115 +12,122 @@ export const generateLeasePDF = (owner: Owner, tenant: Tenant, agency: Agency) =
   const doc = new jsPDF();
   const primaryColor = [124, 58, 237]; // Violet
   
-  // --- EN-TÊTE AGENCE ---
-  doc.setFontSize(18);
+  // --- EN-TÊTE ---
+  doc.setFontSize(22);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setFont(undefined, 'bold');
   doc.text(agency.name || 'AGENCE IMMOBILIÈRE', 105, 20, { align: 'center' });
   
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
   doc.setFont(undefined, 'normal');
-  doc.text(`${agency.address || ''} | Tél: ${agency.phone || ''}`, 105, 26, { align: 'center' });
-  doc.text(`NINEA: ${agency.ninea || '...'} | RCCM: ${agency.rccm || '...'}`, 105, 30, { align: 'center' });
+  doc.text(`${agency.address || ''} | Tél: ${agency.phone || ''}`, 105, 27, { align: 'center' });
+  doc.text(`NINEA: ${agency.ninea || '...'} | RCCM: ${agency.rccm || '...'}`, 105, 32, { align: 'center' });
 
   doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.setLineWidth(0.5);
-  doc.line(20, 35, 190, 35);
+  doc.setLineWidth(0.8);
+  doc.line(20, 38, 190, 38);
 
-  // --- TITRE DU CONTRAT ---
-  doc.setFontSize(16);
+  // --- TITRE ---
+  doc.setFontSize(18);
   doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, 'bold');
-  doc.text("CONTRAT DE BAIL À USAGE D'HABITATION", 105, 45, { align: 'center' });
-  
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
-  doc.text(`Fait le : ${format(new Date(), 'dd MMMM yyyy', { locale: fr })}`, 160, 52);
+  doc.text("CONTRAT DE BAIL À USAGE D'HABITATION", 105, 55, { align: 'center' });
 
   // --- LES PARTIES ---
-  let y = 65;
+  let y = 75;
+  doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
   doc.text("ENTRE LES SOUSSIGNÉS :", 20, y);
   
-  y += 10;
+  y += 12;
   doc.setFont(undefined, 'bold');
   doc.text("LE BAILLEUR :", 20, y);
   doc.setFont(undefined, 'normal');
-  doc.text(`M/Mme ${owner.firstName} ${owner.lastName}`, 50, y);
-  y += 5;
-  doc.text(`Représenté par l'agence ${agency.name}`, 50, y);
+  // Utilisation du nom du gérant de l'agence comme demandé
+  const bailleurText = `M/Mme ${agency.ownerName || 'Le Gérant'}, agissant au nom et pour le compte de l'agence ${agency.name}.`;
+  const splitBailleur = doc.splitTextToSize(bailleurText, 140);
+  doc.text(splitBailleur, 55, y);
   
-  y += 10;
+  y += (splitBailleur.length * 6) + 5;
   doc.setFont(undefined, 'bold');
   doc.text("LE PRENEUR :", 20, y);
   doc.setFont(undefined, 'normal');
-  doc.text(`M/Mme ${tenant.firstName} ${tenant.lastName}`, 50, y);
-  y += 5;
-  doc.text(`Né(e) le ${tenant.birthDate || '...'} à ${tenant.birthPlace || '...'}`, 50, y);
-  doc.text(`Identité (NCI/Passeport) : ${tenant.idNumber}`, 50, y + 5);
+  // Récupération automatique des données du locataire
+  doc.text(`M/Mme ${tenant.firstName} ${tenant.lastName}`, 55, y);
+  y += 6;
+  doc.text(`N° Identité (NCI/Passeport) : ${tenant.idNumber || 'Non renseigné'}`, 55, y);
 
   // --- ARTICLES ---
   y += 20;
   doc.setFont(undefined, 'bold');
-  doc.text("ARTICLE 1 : OBJET DU CONTRAT", 20, y);
+  doc.text("ARTICLE 1 : OBJET ET DÉSIGNATION", 20, y);
   y += 7;
   doc.setFont(undefined, 'normal');
-  const objetText = `Le bailleur donne en location au preneur, qui l'accepte, le local de type "${tenant.unitName}" composé de ${tenant.roomsCount} pièce(s), situé à l'adresse suivante : ${owner.address}.`;
+  const objetText = `Le présent contrat a pour objet la location d'un local de type "${tenant.unitName}" de ${tenant.roomsCount} pièce(s), situé à : ${owner.address}. Ce local est strictement réservé à l'usage d'habitation.`;
   const splitObjet = doc.splitTextToSize(objetText, 170);
   doc.text(splitObjet, 20, y);
   
-  y += (splitObjet.length * 5) + 5;
+  y += (splitObjet.length * 6) + 10;
   doc.setFont(undefined, 'bold');
-  doc.text("ARTICLE 2 : DURÉE DU CONTRAT", 20, y);
+  doc.text("ARTICLE 2 : DURÉE", 20, y);
   y += 7;
   doc.setFont(undefined, 'normal');
-  doc.text(`Le présent contrat est conclu pour une durée déterminée d'un an renouvelable par tacite reconduction, commençant le ${format(new Date(tenant.startDate || new Date()), 'dd/MM/yyyy')}.`, 20, y);
+  const dateDebut = tenant.startDate ? format(new Date(tenant.startDate), 'dd/MM/yyyy') : 'date d\'entrée';
+  doc.text(`Le bail est consenti pour une durée d'un (01) an renouvelable, prenant effet le ${dateDebut}.`, 20, y);
 
   y += 15;
   doc.setFont(undefined, 'bold');
-  doc.text("ARTICLE 3 : LOYER ET CHARGES", 20, y);
+  doc.text("ARTICLE 3 : LOYER", 20, y);
   y += 7;
   doc.setFont(undefined, 'normal');
-  doc.text(`Le loyer mensuel est fixé à la somme de : ${formatNumber(tenant.rentAmount || 0)} FCFA.`, 20, y);
-  y += 5;
-  doc.text("Le loyer est payable d'avance entre le 1er et le 05 de chaque mois.", 20, y);
+  doc.text(`Le loyer mensuel est fixé à la somme de : ${formatNumber(tenant.rentAmount)} FCFA NET.`, 20, y);
+  y += 6;
+  doc.text("Le paiement doit être effectué au plus tard le 05 de chaque mois auprès de l'agence.", 20, y);
 
   y += 15;
   doc.setFont(undefined, 'bold');
-  doc.text("ARTICLE 4 : DÉPÔT DE GARANTIE (CAUTION)", 20, y);
+  doc.text("ARTICLE 4 : CAUTION", 20, y);
   y += 7;
   doc.setFont(undefined, 'normal');
-  doc.text(`Le preneur verse à l'entrée une somme correspondant au dépôt de garantie qui sera restituée en fin de bail, déduction faite des éventuelles réparations locatives.`, 20, y);
+  doc.text("Le preneur a versé un dépôt de garantie pour répondre des dommages éventuels en fin de bail.", 20, y);
+
+  // --- MENTION "FAIT À DAKAR" EN BAS ---
+  y = 220;
+  doc.setFont(undefined, 'italic');
+  doc.setFontSize(11);
+  const dateFait = format(new Date(), 'dd MMMM yyyy', { locale: fr });
+  doc.text(`Fait à Dakar, le ${dateFait}`, 190, y, { align: 'right' });
 
   // --- SIGNATURES ---
-  y = 230;
+  y += 15;
   doc.setFont(undefined, 'bold');
-  doc.text("SIGNATURE DU PRENEUR", 30, y);
-  doc.text("SIGNATURE DU BAILLEUR / AGENCE", 120, y);
+  doc.setFontSize(12);
+  doc.text("Signature du Preneur", 20, y);
+  doc.text("Le Bailleur / L'Agence", 130, y);
   
+  doc.setFontSize(9);
   doc.setFont(undefined, 'normal');
-  doc.setFontSize(8);
-  doc.text("(Précédé de la mention 'Lu et approuvé')", 35, y + 5);
-  doc.text("(Cachet et Signature)", 140, y + 5);
+  doc.text("(Mention 'Lu et approuvé')", 20, y + 5);
+  doc.text("(Cachet et signature)", 130, y + 5);
 
-  doc.setLineWidth(0.2);
+  doc.setDrawColor(200, 200, 200);
   doc.line(20, y + 10, 80, y + 10);
-  doc.line(120, y + 10, 190, y + 10);
+  doc.line(130, y + 10, 190, y + 10);
 
-  // Pied de page
+  // Footer
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Contrat généré par GESTION LOCATIVE PRO - Page 1/1`, 105, 285, { align: 'center' });
+  doc.text(`Document officiel généré par GESTION LOCATIVE PRO - Kissima Media`, 105, 285, { align: 'center' });
 
-  doc.save(`Contrat_Bail_${tenant.lastName}_${tenant.firstName}.pdf`);
+  doc.save(`Bail_${tenant.lastName}_${tenant.firstName}.pdf`);
 };
 
 export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
   const doc = new jsPDF();
   const primaryColor = [124, 58, 237]; // Violet
   
-  // --- EN-TÊTE AGENCE ---
+  // --- EN-TÊTE ---
   doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setLineWidth(1);
   doc.line(20, 20, 30, 10);
@@ -136,7 +143,7 @@ export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
   doc.setTextColor(100, 100, 100);
   doc.setFont(undefined, 'normal');
   doc.text(agency.address || 'Adresse de l\'agence', 45, 23);
-  doc.text(`Tél: ${agency.phone || 'Non renseigné'} | Email: ${agency.email || ''}`, 45, 27);
+  doc.text(`Tél: ${agency.phone || 'Non renseigné'}`, 45, 27);
 
   doc.setFontSize(22);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -175,7 +182,7 @@ export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
   
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  const footerText = `NINEA: ${agency.ninea || '...'} | RCCM: ${agency.rccm || '...'} | Généré par GESTION LOCATIVE PRO sn`;
+  const footerText = `NINEA: ${agency.ninea || '...'} | Généré par GESTION LOCATIVE PRO sn`;
   doc.text(footerText, 105, 155, { align: 'center' });
   
   doc.setFontSize(10);
