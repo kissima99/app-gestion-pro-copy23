@@ -26,7 +26,9 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
     firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, status: 'active', ownerId: ''
   });
 
-  const handleAdd = async () => {
+  const handleAdd = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Sécurité supplémentaire
+    
     if (!newTenant.firstName || !newTenant.lastName || !newTenant.unitName || !newTenant.ownerId) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
@@ -62,71 +64,96 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
             <UserPlus className="w-5 h-5" /> Ajouter un Locataire
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label className="font-bold text-primary">Propriétaire du logement</Label>
-            <Select onValueChange={(v) => setNewTenant({...newTenant, ownerId: v})} value={newTenant.ownerId}>
-              <SelectTrigger className="border-primary/20 focus:ring-primary">
-                <SelectValue placeholder="Choisir le propriétaire" />
-              </SelectTrigger>
-              <SelectContent>
-                {owners.map(owner => (
-                  <SelectItem key={owner.id} value={owner.id}>{owner.firstName} {owner.lastName}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="font-bold text-primary">Prénom</Label>
-            <Input value={newTenant.firstName} onChange={e => setNewTenant({...newTenant, firstName: e.target.value})} className="border-primary/20" />
-          </div>
-          <div className="space-y-2">
-            <Label className="font-bold text-primary">Nom</Label>
-            <Input value={newTenant.lastName} onChange={e => setNewTenant({...newTenant, lastName: e.target.value})} className="border-primary/20" />
-          </div>
-          <div className="space-y-2">
-            <Label className="font-bold text-primary">Local occupé</Label>
-            <Select onValueChange={(v) => setNewTenant({...newTenant, unitName: v})} value={newTenant.unitName}>
-              <SelectTrigger className="border-primary/20">
-                <SelectValue placeholder="Choisir le local" />
-              </SelectTrigger>
-              <SelectContent>
-                {UNIT_TYPES.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="font-bold text-primary">Nombre de pièces</Label>
-            <div className="relative">
-              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+        <CardContent className="p-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2">
+              <Label className="font-bold text-primary">Propriétaire du logement</Label>
+              <Select onValueChange={(v) => setNewTenant({...newTenant, ownerId: v})} value={newTenant.ownerId}>
+                <SelectTrigger className="border-primary/20 focus:ring-primary">
+                  <SelectValue placeholder="Choisir le propriétaire" />
+                </SelectTrigger>
+                <SelectContent>
+                  {owners.map(owner => (
+                    <SelectItem key={owner.id} value={owner.id}>{owner.firstName} {owner.lastName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-primary">Prénom</Label>
+              <Input 
+                value={newTenant.firstName} 
+                onChange={e => setNewTenant({...newTenant, firstName: e.target.value})} 
+                className="border-primary/20" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-primary">Nom</Label>
+              <Input 
+                value={newTenant.lastName} 
+                onChange={e => setNewTenant({...newTenant, lastName: e.target.value})} 
+                className="border-primary/20" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-primary">Local occupé</Label>
+              <Select onValueChange={(v) => setNewTenant({...newTenant, unitName: v})} value={newTenant.unitName}>
+                <SelectTrigger className="border-primary/20">
+                  <SelectValue placeholder="Choisir le local" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIT_TYPES.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-primary">Nombre de pièces</Label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                <Input 
+                  type="text" 
+                  inputMode="numeric"
+                  value={newTenant.roomsCount || ''} 
+                  onChange={e => setNewTenant({...newTenant, roomsCount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
+                  className="border-primary/20 pl-10"
+                  placeholder="Ex: 3"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-primary">Loyer (FCFA)</Label>
               <Input 
                 type="text" 
                 inputMode="numeric"
-                value={newTenant.roomsCount || ''} 
-                onChange={e => setNewTenant({...newTenant, roomsCount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
-                className="border-primary/20 pl-10"
-                placeholder="Ex: 3"
+                value={newTenant.rentAmount || ''} 
+                onChange={e => setNewTenant({...newTenant, rentAmount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
+                className="border-primary/20 font-bold text-primary" 
+                placeholder="Montant du loyer"
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label className="font-bold text-primary">Loyer (FCFA)</Label>
-            <Input 
-              type="text" 
-              inputMode="numeric"
-              value={newTenant.rentAmount || ''} 
-              onChange={e => setNewTenant({...newTenant, rentAmount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
-              className="border-primary/20 font-bold text-primary" 
-              placeholder="Saisie manuelle du montant"
-            />
-          </div>
-          <Button onClick={handleAdd} className="md:col-span-2 lg:col-span-1 mt-8 h-12 font-black shadow-lg" disabled={isSubmitting}>
+          <Button 
+            type="button"
+            onClick={handleAdd} 
+            className="w-full md:w-fit mt-6 h-12 px-12 font-black shadow-lg" 
+            disabled={isSubmitting}
+          >
             {isSubmitting ? <Loader2 className="animate-spin" /> : "ENREGISTRER"}
           </Button>
         </CardContent>
       </Card>
+
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input 
+          className="pl-10" 
+          placeholder="Rechercher un locataire..." 
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         {filteredTenants.map(tenant => {
@@ -163,10 +190,22 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button size="sm" variant="default" className="flex-1 font-bold" onClick={() => owner && generateLeasePDF(owner, tenant)}>
+                  <Button 
+                    type="button"
+                    size="sm" 
+                    variant="default" 
+                    className="flex-1 font-bold" 
+                    onClick={() => owner && generateLeasePDF(owner, tenant)}
+                  >
                     <FileText className="w-4 h-4 mr-2" /> BAIL PDF
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-red-500 hover:bg-red-50" onClick={() => onDelete(tenant.id!)}>
+                  <Button 
+                    type="button"
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-red-500 hover:bg-red-50" 
+                    onClick={() => onDelete(tenant.id!)}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
