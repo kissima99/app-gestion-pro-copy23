@@ -4,21 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Sparkles, ArrowRight, UserPlus, Building2 } from 'lucide-react';
+import { Mail, Lock, Sparkles, ArrowRight, UserPlus, Building2, AlertCircle } from 'lucide-react';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [useMagicLink, setUseMagicLink] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Rediriger si déjà connecté
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -31,6 +32,7 @@ const Login = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError(null);
     if (!email) return toast.error("Veuillez entrer votre e-mail");
     
     try {
@@ -66,7 +68,17 @@ const Login = () => {
         navigate('/');
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Auth error:", error);
+      let message = error.message;
+      
+      if (message.includes("rate_limit")) {
+        message = "Limite d'envoi d'e-mails dépassée. Veuillez réessayer dans une heure ou connectez-vous avec un mot de passe.";
+      } else if (message.includes("Invalid login credentials")) {
+        message = "Identifiants invalides. Vérifiez votre e-mail ou mot de passe.";
+      }
+      
+      setAuthError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -101,6 +113,14 @@ const Login = () => {
         </CardHeader>
         
         <CardContent className="space-y-6 p-8">
+          {authError && (
+            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erreur</AlertTitle>
+              <AlertDescription className="text-xs">{authError}</AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleEmailAuth} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest opacity-60">Adresse e-mail</Label>
@@ -169,12 +189,13 @@ const Login = () => {
                   onClick={() => {
                     setUseMagicLink(!useMagicLink);
                     setIsSignUp(false);
+                    setAuthError(null);
                   }}
                 >
                   {useMagicLink ? (
                     <><Lock className="w-3.5 h-3.5 mr-2" /> Utiliser un mot de passe</>
                   ) : (
-                    <><Sparkles className="w-3.5 h-3.5 mr-2 text-amber-500" /> Connexion sans mot de passe</>
+                    <><Sparkles className="w-3.5 h-3.5 mr-2 text-amber-500" /> Connexion sans mot de passe (Magic Link)</>
                   )}
                 </Button>
                 
@@ -184,6 +205,7 @@ const Login = () => {
                   onClick={() => {
                     setIsSignUp(!isSignUp);
                     setUseMagicLink(false);
+                    setAuthError(null);
                   }}
                 >
                   {isSignUp ? "Déjà un compte ? Connectez-vous" : "Nouveau ? Créer un compte agence gratuit"}
