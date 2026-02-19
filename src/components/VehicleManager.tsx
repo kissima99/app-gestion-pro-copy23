@@ -48,7 +48,8 @@ export const VehicleManager = ({ vehicles, setVehicles }: Props) => {
       id: Date.now().toString(),
       mileage: Number(newVehicle.mileage) || 0,
       dailyRate: Number(newVehicle.dailyRate) || 0,
-      salePrice: Number(newVehicle.salePrice) || undefined
+      salePrice: Number(newVehicle.salePrice) || undefined,
+      year: Number(newVehicle.year) || new Date().getFullYear()
     };
 
     setVehicles([vehicle, ...vehicles]);
@@ -126,11 +127,11 @@ export const VehicleManager = ({ vehicles, setVehicles }: Props) => {
           <div className="space-y-2">
             <Label>Année</Label>
             <Input 
-              type="number" 
-              min="1990" 
-              max={new Date().getFullYear()}
-              value={newVehicle.year} 
-              onChange={e => setNewVehicle({...newVehicle, year: Number(e.target.value)})}
+              type="text" 
+              inputMode="numeric"
+              value={newVehicle.year || ''} 
+              onChange={e => setNewVehicle({...newVehicle, year: Number(e.target.value.replace(/[^0-9]/g, ''))})}
+              placeholder="Ex: 2022"
             />
           </div>
           <div className="space-y-2">
@@ -144,25 +145,30 @@ export const VehicleManager = ({ vehicles, setVehicles }: Props) => {
           <div className="space-y-2">
             <Label>Kilométrage</Label>
             <Input 
-              type="number" 
-              value={newVehicle.mileage} 
-              onChange={e => setNewVehicle({...newVehicle, mileage: Number(e.target.value)})}
+              type="text" 
+              inputMode="numeric"
+              value={newVehicle.mileage || ''} 
+              onChange={e => setNewVehicle({...newVehicle, mileage: Number(e.target.value.replace(/[^0-9]/g, ''))})}
+              placeholder="Ex: 50000"
             />
           </div>
           <div className="space-y-2">
             <Label>Tarif journalier (FCFA)</Label>
             <Input 
-              type="number" 
-              value={newVehicle.dailyRate} 
-              onChange={e => setNewVehicle({...newVehicle, dailyRate: Number(e.target.value)})}
+              type="text" 
+              inputMode="numeric"
+              value={newVehicle.dailyRate || ''} 
+              onChange={e => setNewVehicle({...newVehicle, dailyRate: Number(e.target.value.replace(/[^0-9]/g, ''))})}
+              placeholder="Ex: 25000"
             />
           </div>
           <div className="space-y-2">
             <Label>Prix de vente (FCFA)</Label>
             <Input 
-              type="number" 
-              value={newVehicle.salePrice} 
-              onChange={e => setNewVehicle({...newVehicle, salePrice: Number(e.target.value)})}
+              type="text" 
+              inputMode="numeric"
+              value={newVehicle.salePrice || ''} 
+              onChange={e => setNewVehicle({...newVehicle, salePrice: Number(e.target.value.replace(/[^0-9]/g, ''))})}
               placeholder="Optionnel"
             />
           </div>

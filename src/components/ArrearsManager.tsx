@@ -63,6 +63,7 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, onAdd, onDele
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2">
+        {/* ... keep existing logic */}
         <Card className="border-red-200 bg-red-50/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-700 text-lg">
@@ -141,7 +142,13 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, onAdd, onDele
           </div>
           <div className="space-y-2">
             <Label>Montant de la dette</Label>
-            <Input type="number" value={newArrear.amount} onChange={e => setNewArrear({...newArrear, amount: Number(e.target.value)})} />
+            <Input 
+              type="text" 
+              inputMode="numeric"
+              value={newArrear.amount || ''} 
+              onChange={e => setNewArrear({...newArrear, amount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
+              placeholder="Ex: 50000"
+            />
           </div>
           <div className="space-y-2">
             <Label>Mois / Motif</Label>
@@ -154,6 +161,7 @@ export const ArrearsManager = ({ tenants, receipts, manualArrears, onAdd, onDele
       </Card>
 
       <div className="space-y-4">
+        {/* ... keep table */}
         <h3 className="font-bold text-lg flex items-center gap-2">
           <Wallet className="w-5 h-5 text-primary" /> Historique des Dettes & Arriérés
         </h3>

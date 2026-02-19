@@ -61,7 +61,13 @@ export const ExpenseManager = ({ expenses, onAdd, onDelete, owners }: Props) => 
           </div>
           <div className="space-y-2">
             <Label>Montant (FCFA)</Label>
-            <Input type="number" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} />
+            <Input 
+              type="text" 
+              inputMode="numeric"
+              value={newExpense.amount || ''} 
+              onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
+              placeholder="Ex: 15000"
+            />
           </div>
           <div className="space-y-2">
             <Label>Catégorie</Label>

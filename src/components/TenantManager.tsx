@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, FileText, Trash2, Home, User, Loader2 } from 'lucide-react';
+import { Search, UserPlus, FileText, Trash2, Home, User, Loader2, Hash } from 'lucide-react';
 import { Tenant, Owner } from '../types/rental';
 import { generateLeasePDF } from '../lib/pdf-service';
 import { Badge } from "@/components/ui/badge";
@@ -98,8 +98,29 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
             </Select>
           </div>
           <div className="space-y-2">
+            <Label className="font-bold text-primary">Nombre de pièces</Label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+              <Input 
+                type="text" 
+                inputMode="numeric"
+                value={newTenant.roomsCount || ''} 
+                onChange={e => setNewTenant({...newTenant, roomsCount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
+                className="border-primary/20 pl-10"
+                placeholder="Ex: 3"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
             <Label className="font-bold text-primary">Loyer (FCFA)</Label>
-            <Input type="number" value={newTenant.rentAmount} onChange={e => setNewTenant({...newTenant, rentAmount: Number(e.target.value)})} className="border-primary/20 font-bold text-primary" />
+            <Input 
+              type="text" 
+              inputMode="numeric"
+              value={newTenant.rentAmount || ''} 
+              onChange={e => setNewTenant({...newTenant, rentAmount: Number(e.target.value.replace(/[^0-9]/g, ''))})} 
+              className="border-primary/20 font-bold text-primary" 
+              placeholder="Saisie manuelle du montant"
+            />
           </div>
           <Button onClick={handleAdd} className="md:col-span-2 lg:col-span-1 mt-8 h-12 font-black shadow-lg" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : "ENREGISTRER"}
@@ -121,7 +142,7 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
                     <div>
                       <h3 className="font-black text-lg text-primary uppercase">{tenant.firstName} {tenant.lastName}</h3>
                       <p className="text-xs font-bold text-muted-foreground flex items-center gap-1">
-                        <Home className="w-3 h-3" /> {tenant.unitName}
+                        <Home className="w-3 h-3" /> {tenant.unitName} ({tenant.roomsCount} pièces)
                       </p>
                     </div>
                   </div>
