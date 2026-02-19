@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, UserPlus, FileText, Trash2, Home, User, Loader2, Hash } from 'lucide-react';
-import { Tenant, Owner } from '../types/rental';
+import { Tenant, Owner, Agency } from '../types/rental';
 import { generateLeasePDF } from '../lib/pdf-service';
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useLocalStorage } from '../hooks/use-local-storage';
 
 interface Props {
   tenants: Tenant[];
@@ -22,12 +23,16 @@ const UNIT_TYPES = ["Appartement", "Studio", "Chambre", "Magasin", "Bureau", "Vi
 export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [agency] = useLocalStorage<Agency>('rental_agency', {
+    name: '', address: '', phone: '', email: '', ninea: '', rccm: '', commissionRate: 10
+  });
+
   const [newTenant, setNewTenant] = useState<Partial<Tenant>>({
     firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, status: 'active', ownerId: ''
   });
 
   const handleAdd = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Sécurité supplémentaire
+    e.preventDefault();
     
     if (!newTenant.firstName || !newTenant.lastName || !newTenant.unitName || !newTenant.ownerId) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
@@ -195,7 +200,7 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
                     size="sm" 
                     variant="default" 
                     className="flex-1 font-bold" 
-                    onClick={() => owner && generateLeasePDF(owner, tenant)}
+                    onClick={() => owner && generateLeasePDF(owner, tenant, agency)}
                   >
                     <FileText className="w-4 h-4 mr-2" /> BAIL PDF
                   </Button>
