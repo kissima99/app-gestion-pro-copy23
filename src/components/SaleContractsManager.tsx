@@ -109,9 +109,11 @@ export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles
           <div className="space-y-2">
             <Label>Prix de vente (FCFA)</Label>
             <Input 
-              type="number" 
-              value={newContract.salePrice} 
-              onChange={e => setNewContract({...newContract, salePrice: Number(e.target.value)})}
+              type="text" 
+              inputMode="numeric"
+              value={newContract.salePrice || ''} 
+              onChange={e => setNewContract({...newContract, salePrice: Number(e.target.value.replace(/[^0-9]/g, ''))})}
+              placeholder="Ex: 5000000"
             />
           </div>
           <div className="space-y-2">
@@ -128,7 +130,7 @@ export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={createContract} className="md:col-span-2">
+          <Button onClick={createContract} className="md:col-span-2 h-12 font-bold">
             <FileText className="w-4 h-4 mr-2" /> Générer le contrat
           </Button>
         </CardContent>

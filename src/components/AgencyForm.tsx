@@ -48,9 +48,10 @@ export const AgencyForm = ({ agency, setAgency }: Props) => {
                 </Label>
                 <Input 
                   id="agency-commission"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={agency.commissionRate || ''} 
-                  onChange={(e) => setAgency({...agency, commissionRate: Number(e.target.value)})}
+                  onChange={(e) => setAgency({...agency, commissionRate: Number(e.target.value.replace(/[^0-9]/g, ''))})}
                   placeholder="Ex: 10"
                 />
               </div>
