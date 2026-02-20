@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Sparkles, ArrowRight, UserPlus, Building2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Building2, AlertCircle, ArrowRight } from 'lucide-react';
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -14,211 +13,93 @@ const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [useMagicLink, setUseMagicLink] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
-      }
-    };
-    checkSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate('/');
+    });
   }, [navigate]);
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    if (!email) return toast.error("Veuillez entrer votre e-mail");
+    if (!email || !password) return toast.error("Veuillez remplir tous les champs");
     
     try {
       setLoading(true);
-      
-      if (useMagicLink) {
-        const { error } = await supabase.auth.signInWithOtp({ 
-          email,
-          options: { emailRedirectTo: window.location.origin }
-        });
-        if (error) throw error;
-        toast.success("Lien de connexion envoyé ! Vérifiez votre boîte de réception.");
-        return;
-      }
-
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ 
-          email, 
-          password,
-          options: {
-            data: {
-              full_name: email.split('@')[0],
-            }
-          }
-        });
+        const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast.success("Compte créé avec succès !");
-        navigate('/');
+        toast.success("Compte créé ! Connectez-vous maintenant.");
+        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Connexion réussie !");
+        toast.success("Bienvenue !");
         navigate('/');
       }
     } catch (error: any) {
       console.error("Auth error:", error);
-      let message = error.message;
-      
-      if (message.includes("rate_limit")) {
-        message = "Limite d'envoi d'e-mails dépassée. Veuillez réessayer dans une heure ou connectez-vous avec un mot de passe.";
-      } else if (message.includes("Invalid login credentials")) {
-        message = "Identifiants invalides. Vérifiez votre e-mail ou mot de passe.";
+      let message = "Une erreur est survenue.";
+      if (error.message.includes("rate_limit")) {
+        message = "Trop de tentatives. Veuillez patienter un moment.";
+      } else if (error.message.includes("Invalid login credentials")) {
+        message = "E-mail ou mot de passe incorrect.";
+      } else {
+        message = error.message;
       }
-      
       setAuthError(message);
-      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-gradient-to-br from-primary/10 via-background to-secondary/30">
-      <Card className="w-full max-w-md border-primary/20 shadow-2xl overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-purple-400 to-primary" />
-        
-        <CardHeader className="text-center space-y-2 pt-10">
-          <div className="mx-auto bg-primary w-20 h-20 rounded-3xl flex items-center justify-center mb-2 shadow-xl rotate-3 transition-transform hover:rotate-0 cursor-default">
-            {isSignUp ? (
-              <UserPlus className="text-white w-10 h-10" />
-            ) : (
-              <Building2 className="text-white w-10 h-10" />
-            )}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/30 p-4">
+      <Card className="w-full max-w-md shadow-2xl border-primary/20">
+        <CardHeader className="text-center">
+          <div className="mx-auto bg-primary w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+            <Building2 className="text-white w-8 h-8" />
           </div>
-          
-          <div className="space-y-1">
-            <CardTitle className="text-3xl font-black tracking-tighter text-primary">
-              GESTION LOCATIVE PRO
-            </CardTitle>
-            <CardDescription className="text-base font-medium flex items-center justify-center gap-2">
-              {isSignUp ? (
-                <>Création de votre espace <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">Gratuit</Badge></>
-              ) : (
-                "Expertise Immobilière Digitale"
-              )}
-            </CardDescription>
-          </div>
+          <CardTitle className="text-2xl font-black text-primary uppercase">Gestion Locative Pro</CardTitle>
+          <CardDescription>{isSignUp ? "Créer un nouveau compte" : "Accédez à votre espace agence"}</CardDescription>
         </CardHeader>
-        
-        <CardContent className="space-y-6 p-8">
+        <CardContent className="space-y-4">
           {authError && (
-            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Erreur</AlertTitle>
-              <AlertDescription className="text-xs">{authError}</AlertDescription>
+              <AlertDescription>{authError}</AlertDescription>
             </Alert>
           )}
-
-          <form onSubmit={handleEmailAuth} className="space-y-5">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest opacity-60">Adresse e-mail</Label>
+              <Label>E-mail</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40 w-5 h-5" />
-                <Input 
-                  id="email"
-                  type="email" 
-                  placeholder="votre@agence.com" 
-                  className="pl-10 h-12 border-primary/10 focus-visible:ring-primary bg-white/50"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  required
-                />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40 w-4 h-4" />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" required />
               </div>
             </div>
-
-            {!useMagicLink && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest opacity-60">Mot de passe</Label>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40 w-5 h-5" />
-                  <Input 
-                    id="password"
-                    type="password" 
-                    placeholder="••••••••" 
-                    className="pl-10 h-12 border-primary/10 focus-visible:ring-primary bg-white/50"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    required
-                    minLength={6}
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label>Mot de passe</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40 w-4 h-4" />
+                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" required />
               </div>
-            )}
-
-            <Button type="submit" className="w-full h-14 text-lg font-bold shadow-lg group transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={loading}>
-              {loading ? "Traitement..." : (
-                <span className="flex items-center gap-2">
-                  {useMagicLink ? "Envoyer le lien" : (isSignUp ? "Démarrer gratuitement" : "Se connecter")}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-              )}
+            </div>
+            <Button type="submit" className="w-full font-bold h-12" disabled={loading}>
+              {loading ? "Chargement..." : isSignUp ? "S'inscrire" : "Se connecter"} <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
-
-            <div className="flex flex-col gap-4 pt-2">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-primary/10" />
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest">
-                  <span className="bg-white px-3 text-muted-foreground">Options</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm"
-                  className="text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/5"
-                  onClick={() => {
-                    setUseMagicLink(!useMagicLink);
-                    setIsSignUp(false);
-                    setAuthError(null);
-                  }}
-                >
-                  {useMagicLink ? (
-                    <><Lock className="w-3.5 h-3.5 mr-2" /> Utiliser un mot de passe</>
-                  ) : (
-                    <><Sparkles className="w-3.5 h-3.5 mr-2 text-amber-500" /> Connexion sans mot de passe (Magic Link)</>
-                  )}
-                </Button>
-                
-                <button 
-                  type="button"
-                  className="text-sm font-bold text-primary hover:underline decoration-2 underline-offset-4 transition-all"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setUseMagicLink(false);
-                    setAuthError(null);
-                  }}
-                >
-                  {isSignUp ? "Déjà un compte ? Connectez-vous" : "Nouveau ? Créer un compte agence gratuit"}
-                </button>
-              </div>
-            </div>
+            <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="w-full text-sm text-primary font-bold hover:underline">
+              {isSignUp ? "Déjà un compte ? Connexion" : "Pas de compte ? Créer un compte"}
+            </button>
           </form>
         </CardContent>
       </Card>
-      
-      <p className="fixed bottom-6 text-[10px] text-muted-foreground font-medium uppercase tracking-[0.2em]">
-        © 2024 GESTION LOCATIVE PRO • Sécurisé par Supabase
-      </p>
     </div>
   );
 };
