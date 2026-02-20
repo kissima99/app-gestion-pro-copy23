@@ -4,72 +4,68 @@ import { VehicleManager } from '../components/VehicleManager';
 import { ClientManager } from '../components/ClientManager';
 import { RentalContractsManager } from '../components/RentalContractsManager';
 import { SaleContractsManager } from '../components/SaleContractsManager';
+import { useSupabaseData } from '../hooks/use-supabase-data';
 import { useLocalStorage } from '../hooks/use-local-storage';
 import { Vehicle, Client, RentalContract, SaleContract } from '../types/automobile';
-import { Car, Users, FileText, DollarSign, Building2, ArrowLeft } from 'lucide-react';
+import { Car, Users, FileText, DollarSign, Building2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const AutomobileManagement = () => {
-  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('automobile_vehicles', []);
-  const [clients, setClients] = useLocalStorage<Client[]>('automobile_clients', []);
+  const vehiclesData = useSupabaseData<Vehicle>('vehicles');
+  const clientsData = useSupabaseData<Client>('auto_clients');
+  
+  // Ces tables seront migrées prochainement, on garde le local pour l'instant
   const [rentalContracts, setRentalContracts] = useLocalStorage<RentalContract[]>('automobile_rental_contracts', []);
   const [saleContracts, setSaleContracts] = useLocalStorage<SaleContract[]>('automobile_sale_contracts', []);
 
-  const sellers = [{ id: '1', name: 'Agence Automobile' }]; // Exemple de vendeur
+  const sellers = [{ id: '1', name: 'Agence Automobile Pro' }];
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary p-3 rounded-xl">
-              <Car className="text-white w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black tracking-tight">GESTION AUTOMOBILE</h1>
-              <p className="text-muted-foreground">Gestion complète de votre flotte de véhicules</p>
-            </div>
-          </div>
-          
-          <Button variant="outline" asChild className="w-fit">
-            <Link to="/">
-              <Building2 className="w-4 h-4 mr-2" />
-              Gestion Locative
-            </Link>
-          </Button>
-        </header>
+    <div className="min-h-screen bg-background">
+      <header className="bg-primary text-primary-foreground p-4 shadow-lg flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <Car className="w-6 h-6" />
+          <h1 className="font-black tracking-tight text-xl uppercase">GESTION AUTOMOBILE</h1>
+        </div>
+        <Button variant="secondary" size="sm" asChild>
+          <Link to="/">
+            <Building2 className="w-4 h-4 mr-2" /> IMMOBILIER
+          </Link>
+        </Button>
+      </header>
 
+      <main className="container max-w-7xl mx-auto p-4 md:p-8">
         <Tabs defaultValue="vehicles" className="w-full">
-          <TabsList className="grid grid-cols-4 bg-muted p-1 rounded-xl mb-6">
-            <TabsTrigger value="vehicles" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Car className="w-4 h-4 mr-2" /> Véhicules
-            </TabsTrigger>
-            <TabsTrigger value="clients" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Users className="w-4 h-4 mr-2" /> Clients
-            </TabsTrigger>
-            <TabsTrigger value="rental" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
-              <FileText className="w-4 h-4 mr-2" /> Location
-            </TabsTrigger>
-            <TabsTrigger value="sales" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
-              <DollarSign className="w-4 h-4 mr-2" /> Vente
-            </TabsTrigger>
+          <TabsList className="grid grid-cols-4 bg-muted p-1 rounded-xl mb-8">
+            <TabsTrigger value="vehicles" className="font-bold">Véhicules</TabsTrigger>
+            <TabsTrigger value="clients" className="font-bold">Clients</TabsTrigger>
+            <TabsTrigger value="rental" className="font-bold">Location</TabsTrigger>
+            <TabsTrigger value="sales" className="font-bold">Vente</TabsTrigger>
           </TabsList>
 
           <TabsContent value="vehicles">
-            <VehicleManager vehicles={vehicles} setVehicles={setVehicles} />
+            <VehicleManager 
+              vehicles={vehiclesData.data} 
+              onAdd={vehiclesData.addItem}
+              onDelete={vehiclesData.deleteItem}
+            />
           </TabsContent>
 
           <TabsContent value="clients">
-            <ClientManager clients={clients} setClients={setClients} />
+            <ClientManager 
+              clients={clientsData.data} 
+              onAdd={clientsData.addItem}
+              onDelete={clientsData.deleteItem}
+            />
           </TabsContent>
 
           <TabsContent value="rental">
             <RentalContractsManager 
               rentalContracts={rentalContracts} 
               setRentalContracts={setRentalContracts}
-              vehicles={vehicles}
-              clients={clients}
+              vehicles={vehiclesData.data}
+              clients={clientsData.data}
             />
           </TabsContent>
 
@@ -77,12 +73,12 @@ const AutomobileManagement = () => {
             <SaleContractsManager 
               saleContracts={saleContracts} 
               setSaleContracts={setSaleContracts}
-              vehicles={vehicles}
+              vehicles={vehiclesData.data}
               sellers={sellers}
             />
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

@@ -2,14 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-// Utilitaires pour la conversion de casse
+// Utilitaires pour la conversion de casse (Snake Case <=> Camel Case)
 const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 const toCamelCase = (str: string) => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 
 const mapKeys = (obj: any, fn: (key: string) => string) => {
-  if (!obj || typeof obj !== 'object') return obj;
+  if (!obj || typeof obj !== 'object' || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(v => mapKeys(v, fn));
+  
   return Object.keys(obj).reduce((acc, key) => {
-    acc[fn(key)] = obj[key];
+    const newKey = fn(key);
+    acc[newKey] = mapKeys(obj[key], fn);
     return acc;
   }, {} as any);
 };
@@ -56,11 +59,10 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
       
       const newItem = mapKeys(result[0], toCamelCase);
       setData(prev => [newItem, ...prev]);
-      toast.success("Ajouté avec succès");
+      toast.success("Enregistré avec succès");
       return newItem;
     } catch (error: any) {
-      const msg = error.message || "Erreur lors de l'ajout";
-      toast.error(msg);
+      toast.error(error.message || "Erreur lors de l'enregistrement");
       return null;
     }
   };
@@ -76,8 +78,7 @@ export function useSupabaseData<T extends { id?: string }>(tableName: string) {
       setData(prev => prev.filter(item => item.id !== id));
       toast.success("Supprimé");
     } catch (error: any) {
-      const msg = error.message || "Erreur lors de la suppression";
-      toast.error(msg);
+      toast.error(error.message || "Erreur lors de la suppression");
     }
   };
 
