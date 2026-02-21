@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,21 +7,41 @@ import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   session: Session | null;
+  role: string | null;
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ session: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ session: null, role: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      setRole(data?.role || 'client');
+    } catch (error) {
+      console.error("[Auth] Erreur lors de la récupération du profil:", error);
+      setRole('client');
+    }
+  };
+
   useEffect(() => {
-    // Initialisation de la session
     const getInitialSession = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         setSession(initialSession);
+        if (initialSession?.user) {
+          await fetchProfile(initialSession.user.id);
+        }
       } catch (error) {
         console.error("[Auth] Erreur session:", error);
       } finally {
@@ -29,15 +51,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getInitialSession();
 
-    // Surveillance des changements d'état
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log(`[Auth Event] ${event}`);
       
-      // On ne change la session que si c'est nécessaire pour éviter les re-rendus inutiles
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        setSession(newSession);
-      } else if (event === 'SIGNED_OUT') {
-        setSession(null);
+      setSession(newSession);
+      if (newSession?.user) {
+        await fetchProfile(newSession.user.id);
+      } else {
+        setRole(null);
       }
       
       setLoading(false);
@@ -47,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, loading }}>
+    <AuthContext.Provider value={{ session, role, loading }}>
       {!loading ? children : (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">

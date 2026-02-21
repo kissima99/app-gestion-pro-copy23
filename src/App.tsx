@@ -1,3 +1,5 @@
+"use client";
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,15 +15,26 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Composant de protection de route amélioré
+// Composant de protection de route standard
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
-  // On ne fait rien tant que le chargement initial n'est pas terminé
   if (loading) return null;
-  
-  // Redirection seulement si la session est confirmée comme nulle
   if (!session) return <Navigate to="/login" replace />;
+  
+  return <>{children}</>;
+};
+
+// Composant de protection de route spécifique aux Admins
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, role, loading } = useAuth();
+  
+  if (loading) return null;
+  if (!session) return <Navigate to="/login" replace />;
+  if (role !== 'admin') {
+    console.warn("[Security] Tentative d'accès non autorisée au panneau admin");
+    return <Navigate to="/" replace />;
+  }
   
   return <>{children}</>;
 };
@@ -44,9 +57,9 @@ const AppRoutes = () => {
       } />
       
       <Route path="/super-admin" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <SuperAdmin />
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       
       <Route path="*" element={<NotFound />} />
