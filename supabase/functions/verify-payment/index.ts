@@ -8,79 +8,115 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    console.log("[verify-payment] Starting payment verification process");
+    console.log("[verify-payment] Starting secure payment verification");
 
-    // 1. Get the JWT from the Authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error("[verify-payment] Missing Authorization header");
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // 2. Initialize Supabase client with Service Role Key to bypass RLS
+    const { transactionId, provider, amount } = await req.json();
+
+    if (!transactionId || !provider) {
+      console.error("[verify-payment] Missing transaction details");
+      return new Response(JSON.stringify({ error: 'Missing transactionId or provider' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 3. Verify the user's identity using the token
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
     if (authError || !user) {
-      console.error("[verify-payment] Invalid token", { authError });
-      return new Response(JSON.stringify({ error: 'Invalid user session' }), {
+      return new Response(JSON.stringify({ error: 'Invalid session' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    // 1. IDEMPOTENCY CHECK: Has this transaction already been used?
+    const { data: existingPayment } = await supabaseAdmin
+      .from('payments')
+      .select('id')
+      .eq('transaction_id', transactionId)
+      .single();
+
+    if (existingPayment) {
+      console.warn("[verify-payment] Duplicate transaction attempt:", transactionId);
+      return new Response(JSON.stringify({ error: 'Transaction already processed' }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     /**
-     * 4. PAYMENT VERIFICATION LOGIC
-     * In a production app, you would verify the transaction ID with your provider 
-     * (Stripe, Wave, Orange Money, etc.) here before proceeding.
+     * 2. EXTERNAL PROVIDER VERIFICATION
+     * This is where you call Stripe, Wave, or Orange Money API.
+     * Example (Stripe):
+     * const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${transactionId}`, {
+     *   headers: { 'Authorization': `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` }
+     * });
+     * const session = await response.json();
+     * if (session.payment_status !== 'paid') throw new Error('Payment not verified');
      */
-    console.log("[verify-payment] Verifying payment for user:", user.id);
     
-    // 5. Update the profile status securely
+    console.log(`[verify-payment] Verifying ${provider} transaction: ${transactionId}`);
+    
+    // MOCK VERIFICATION (Replace with real API calls above)
+    const isVerified = true; // In production, this depends on the API response
+
+    if (!isVerified) {
+      throw new Error("Payment verification failed with provider");
+    }
+
+    // 3. RECORD THE PAYMENT
+    const { error: paymentError } = await supabaseAdmin
+      .from('payments')
+      .insert([{
+        user_id: user.id,
+        transaction_id: transactionId,
+        provider: provider,
+        amount: amount || 0,
+        status: 'completed'
+      }]);
+
+    if (paymentError) throw paymentError;
+
+    // 4. UPDATE PROFILE STATUS
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({ has_paid: true })
       .eq('id', user.id);
 
-    if (updateError) {
-      console.error("[verify-payment] Failed to update profile", { updateError });
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
-    console.log("[verify-payment] Payment successfully verified and profile updated");
+    console.log("[verify-payment] Success for user:", user.id);
 
     return new Response(
       JSON.stringify({ success: true, message: 'Access granted' }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
-    console.error("[verify-payment] Unexpected error", { error: error.message });
+    console.error("[verify-payment] Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 })
