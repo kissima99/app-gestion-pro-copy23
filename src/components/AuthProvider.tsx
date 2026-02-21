@@ -19,17 +19,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const extractRole = (currentSession: Session | null) => {
-    // Priority 1: Secure Custom Claims in JWT (Hard to spoof)
+    // On ne fait confiance qu'aux app_metadata (Custom Claims) injectés dans le JWT par Supabase Auth.
+    // Ces données ne sont PAS modifiables par l'utilisateur via le SDK client.
     const jwtRole = currentSession?.user?.app_metadata?.role;
     if (jwtRole) return jwtRole;
     
-    // Priority 2: User metadata (fallback)
-    return currentSession?.user?.user_metadata?.role || 'client';
+    // Par défaut, on considère l'utilisateur comme un client simple.
+    // Le rôle réel sera vérifié via la table 'profiles' dans fetchProfileRole.
+    return 'client';
   };
 
   const fetchProfileRole = async (userId: string) => {
     try {
-      // Direct database check as double-verification
+      // Vérification directe en base de données (Source de vérité)
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
@@ -52,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (initialSession) {
           setRole(extractRole(initialSession));
-          // Perform secondary verification against the DB
+          // Double vérification contre la base de données
           await fetchProfileRole(initialSession.user.id);
         }
       } catch (error) {
