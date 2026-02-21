@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { Owner, Tenant, Receipt, Agency } from '../types/rental';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -17,7 +17,7 @@ export const generateLeasePDF = (owner: Owner, tenant: Tenant, agency: Agency) =
   
   doc.setFontSize(22);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   doc.text(agency.name || 'AGENCE IMMOBILIÈRE', 105, 20, { align: 'center' });
   
   doc.setFontSize(10);
@@ -32,36 +32,36 @@ export const generateLeasePDF = (owner: Owner, tenant: Tenant, agency: Agency) =
 
   let y = 70;
   doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   doc.text("ENTRE LES SOUSSIGNÉS :", 20, y);
   
   y += 10;
   doc.text("LE BAILLEUR :", 20, y);
-  doc.setFont(undefined, 'normal');
+  doc.setFont("helvetica", "normal");
   doc.text(`M/Mme ${agency.ownerName || 'Le Propriétaire'}, représenté par l'agence ${agency.name}`, 55, y);
   
   y += 10;
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   doc.text("LE PRENEUR :", 20, y);
-  doc.setFont(undefined, 'normal');
+  doc.setFont("helvetica", "normal");
   doc.text(`M/Mme ${tenant.firstName} ${tenant.lastName}, ID: ${tenant.idNumber}`, 55, y);
 
   y += 20;
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   doc.text("ARTICLE 1 : OBJET", 20, y);
   y += 7;
-  doc.setFont(undefined, 'normal');
+  doc.setFont("helvetica", "normal");
   doc.text(`Location d'un local (${tenant.unitName}) sis à ${owner.address}.`, 20, y);
 
   y += 15;
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   doc.text("ARTICLE 2 : LOYER", 20, y);
   y += 7;
-  doc.setFont(undefined, 'normal');
+  doc.setFont("helvetica", "normal");
   doc.text(`Fixé à ${formatNumber(tenant.rentAmount)} FCFA par mois.`, 20, y);
 
   y = 220;
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   const dateFait = format(new Date(), 'dd MMMM yyyy', { locale: fr });
   doc.text(`Fait à Dakar, le ${dateFait}`, 105, y, { align: 'center' });
 
@@ -93,18 +93,18 @@ export const generateCautionPDF = (owner: Owner, tenant: Tenant, agency: Agency)
   doc.text(splitTexte, 20, y);
 
   y += 15;
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text(`${formatNumber(tenant.rentAmount)} FCFA`, 105, y, { align: 'center' });
   
   y += 20;
-  doc.setFont(undefined, 'normal');
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.text(`À titre de dépôt de garantie (Caution) pour le local situé à :`, 20, y);
   doc.text(`${owner.address}`, 20, y + 7);
 
   y = 210;
-  doc.setFont(undefined, 'bold');
+  doc.setFont("helvetica", "bold");
   const dateFait = format(new Date(), 'dd MMMM yyyy', { locale: fr });
   doc.text(`Fait à Dakar, le ${dateFait}`, 105, y, { align: 'center' });
 
@@ -125,12 +125,12 @@ export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
     // 1. Informations de l'Agence (En-tête)
     doc.setFontSize(18);
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.setFont(undefined, 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text(agency.name || 'AGENCE IMMOBILIÈRE', 20, 20);
     
     doc.setFontSize(10);
     doc.setTextColor(80, 80, 80);
-    doc.setFont(undefined, 'normal');
+    doc.setFont("helvetica", "normal");
     doc.text(agency.address || '', 20, 27);
     doc.text(`Tél: ${agency.phone || ''}`, 20, 32);
     doc.text(`Email: ${agency.email || ''}`, 20, 37);
@@ -144,23 +144,23 @@ export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
     // Titre du document
     doc.setFontSize(22);
     doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text('QUITTANCE DE LOYER', 105, 65, { align: 'center' });
 
     // 2. Informations du Locataire
     doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text('LOCATAIRE :', 20, 85);
-    doc.setFont(undefined, 'normal');
+    doc.setFont("helvetica", "normal");
     doc.text(`M/Mme ${receipt.tenantName}`, 50, 85);
     doc.text(`Local : ${receipt.unitName}`, 50, 92);
     doc.text(`Adresse : ${receipt.propertyAddress}`, 50, 99);
 
     // Détails du paiement
-    doc.setFont(undefined, 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text('DÉTAILS DU PAIEMENT :', 20, 115);
     
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 120,
       head: [['Désignation', 'Période', 'Montant']],
       body: [
@@ -171,14 +171,14 @@ export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
         ]
       ],
       theme: 'striped',
-      headStyles: { fillColor: primaryColor },
+      headStyles: { fillColor: primaryColor as any },
       margin: { left: 20, right: 20 }
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 20;
 
     // Signature
-    doc.setFont(undefined, 'bold');
+    doc.setFont("helvetica", "bold");
     const dateFait = format(new Date(), 'dd MMMM yyyy', { locale: fr });
     doc.text(`Fait à Dakar, le ${dateFait}`, 190, finalY, { align: 'right' });
     
