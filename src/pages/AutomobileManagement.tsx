@@ -5,21 +5,26 @@ import { ClientManager } from '../components/ClientManager';
 import { RentalContractsManager } from '../components/RentalContractsManager';
 import { SaleContractsManager } from '../components/SaleContractsManager';
 import { useSupabaseData } from '../hooks/use-supabase-data';
-import { useLocalStorage } from '../hooks/use-local-storage';
 import { Vehicle, Client, RentalContract, SaleContract } from '../types/automobile';
-import { Car, Users, FileText, DollarSign, Building2 } from 'lucide-react';
+import { Car, Building2, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const AutomobileManagement = () => {
   const vehiclesData = useSupabaseData<Vehicle>('vehicles');
   const clientsData = useSupabaseData<Client>('auto_clients');
-  
-  // Ces tables seront migrées prochainement, on garde le local pour l'instant
-  const [rentalContracts, setRentalContracts] = useLocalStorage<RentalContract[]>('automobile_rental_contracts', []);
-  const [saleContracts, setSaleContracts] = useLocalStorage<SaleContract[]>('automobile_sale_contracts', []);
+  const rentalData = useSupabaseData<RentalContract>('rental_contracts');
+  const saleData = useSupabaseData<SaleContract>('sale_contracts');
 
   const sellers = [{ id: '1', name: 'Agence Automobile Pro' }];
+
+  if (vehiclesData.loading || clientsData.loading || rentalData.loading || saleData.loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,19 +67,22 @@ const AutomobileManagement = () => {
 
           <TabsContent value="rental">
             <RentalContractsManager 
-              rentalContracts={rentalContracts} 
-              setRentalContracts={setRentalContracts}
+              rentalContracts={rentalData.data} 
+              setRentalContracts={() => {}} 
               vehicles={vehiclesData.data}
               clients={clientsData.data}
+              onAdd={rentalData.addItem}
+              onDelete={rentalData.deleteItem}
             />
           </TabsContent>
 
           <TabsContent value="sales">
             <SaleContractsManager 
-              saleContracts={saleContracts} 
-              setSaleContracts={setSaleContracts}
+              saleContracts={saleData.data} 
               vehicles={vehiclesData.data}
               sellers={sellers}
+              onAdd={saleData.addItem}
+              onDelete={saleData.deleteItem}
             />
           </TabsContent>
         </Tabs>

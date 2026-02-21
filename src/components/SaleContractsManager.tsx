@@ -6,16 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SaleContract, Vehicle } from '../types/automobile';
 import { generateSaleContractPDF } from '../lib/automobile-pdf-service';
-import { FileText, Download, Plus, DollarSign, User } from 'lucide-react';
+import { FileText, Download, Plus, DollarSign, User, Trash2 } from 'lucide-react';
+import { toast } from "sonner";
 
 interface Props {
   saleContracts: SaleContract[];
-  setSaleContracts: (contracts: SaleContract[]) => void;
+  setSaleContracts?: (contracts: SaleContract[]) => void;
   vehicles: Vehicle[];
   sellers: any[];
+  onAdd?: (item: any) => Promise<any>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
-export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles, sellers }: Props) => {
+export const SaleContractsManager = ({ saleContracts, vehicles, sellers, onAdd, onDelete }: Props) => {
   const [newContract, setNewContract] = useState<Partial<SaleContract>>({
     saleDate: new Date().toISOString().split('T')[0],
     paymentMethod: 'cash',
@@ -25,40 +28,35 @@ export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles
 
   const vehiclesForSale = vehicles.filter(v => v.status === 'available' && v.salePrice);
 
-  const createContract = () => {
+  const createContract = async () => {
     const vehicle = vehicles.find(v => v.id === newContract.vehicleId);
     const seller = sellers[0];
 
     if (!vehicle || !newContract.buyerName || !newContract.buyerPhone || !newContract.salePrice) {
-      alert("Veuillez remplir tous les champs obligatoires");
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
-    const contract: SaleContract = {
-      ...newContract as SaleContract,
-      id: Date.now().toString(),
+    const contractData = {
+      ...newContract,
       contractNumber: `VENTE-${Date.now().toString().slice(-6)}`,
       vehicleDetails: `${vehicle.brand} ${vehicle.model} (${vehicle.registration})`,
       sellerName: seller?.name || 'Vendeur',
       sellerId: seller?.id || '1'
     };
 
-    setSaleContracts([contract, ...saleContracts]);
-    
-    vehicles.forEach(v => {
-      if (v.id === vehicle.id) {
-        v.status = 'sold';
+    if (onAdd) {
+      const result = await onAdd(contractData);
+      if (result) {
+        generateSaleContractPDF(result, vehicle, seller);
+        setNewContract({
+          saleDate: new Date().toISOString().split('T')[0],
+          paymentMethod: 'cash',
+          status: 'draft',
+          createdDate: new Date().toISOString().split('T')[0]
+        });
       }
-    });
-
-    generateSaleContractPDF(contract, vehicle, seller);
-
-    setNewContract({
-      saleDate: new Date().toISOString().split('T')[0],
-      paymentMethod: 'cash',
-      status: 'draft',
-      createdDate: new Date().toISOString().split('T')[0]
-    });
+    }
   };
 
   return (
@@ -88,21 +86,21 @@ export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles
           <div className="space-y-2">
             <Label>Nom de l'acheteur</Label>
             <Input 
-              value={newContract.buyerName} 
+              value={newContract.buyerName || ''} 
               onChange={e => setNewContract({...newContract, buyerName: e.target.value})}
             />
           </div>
           <div className="space-y-2">
             <Label>Téléphone acheteur</Label>
             <Input 
-              value={newContract.buyerPhone} 
+              value={newContract.buyerPhone || ''} 
               onChange={e => setNewContract({...newContract, buyerPhone: e.target.value})}
             />
           </div>
           <div className="space-y-2">
             <Label>Numéro d'identité acheteur</Label>
             <Input 
-              value={newContract.buyerIdNumber} 
+              value={newContract.buyerIdNumber || ''} 
               onChange={e => setNewContract({...newContract, buyerIdNumber: e.target.value})}
             />
           </div>
@@ -146,7 +144,6 @@ export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles
                 <th className="p-3 text-left">Acheteur</th>
                 <th className="p-3 text-left">Véhicule</th>
                 <th className="p-3 text-left">Prix</th>
-                <th className="p-3 text-left">Statut</th>
                 <th className="p-3 text-right">Action</th>
               </tr>
             </thead>
@@ -169,28 +166,17 @@ export const SaleContractsManager = ({ saleContracts, setSaleContracts, vehicles
                         {contract.salePrice.toLocaleString()} FCFA
                       </div>
                     </td>
-                    <td className="p-3">
-                      <Select value={contract.status} onValueChange={(v: SaleContract['status']) => {
-                        setSaleContracts(saleContracts.map(c => c.id === contract.id ? { ...c, status: v } : c));
-                      }}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Brouillon</SelectItem>
-                          <SelectItem value="completed">Finalisé</SelectItem>
-                          <SelectItem value="cancelled">Annulé</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right flex justify-end gap-2">
                       <Button size="icon" variant="ghost" onClick={() => {
-                        if (vehicle) {
-                          generateSaleContractPDF(contract, vehicle, sellers[0]);
-                        }
+                        if (vehicle) generateSaleContractPDF(contract, vehicle, sellers[0]);
                       }}>
                         <Download className="w-4 h-4" />
                       </Button>
+                      {onDelete && (
+                        <Button size="icon" variant="ghost" className="text-red-500" onClick={() => onDelete(contract.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 );
