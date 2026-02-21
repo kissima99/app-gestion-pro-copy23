@@ -31,7 +31,19 @@ export const ClientManager = ({ clients, onAdd, onDelete }: Props) => {
 
     setLoading(true);
     try {
-      await onAdd(newClient);
+      // On ne garde que les champs qui existent dans la table auto_clients
+      const clientData = {
+        firstName: newClient.firstName,
+        lastName: newClient.lastName,
+        phone: newClient.phone,
+        idNumber: newClient.idNumber,
+        address: newClient.address || '',
+        clientType: newClient.clientType,
+        companyName: newClient.companyName || '',
+        registrationDate: newClient.registrationDate
+      };
+
+      await onAdd(clientData);
       setNewClient({
         clientType: 'individual',
         registrationDate: new Date().toISOString().split('T')[0]
