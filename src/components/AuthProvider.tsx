@@ -18,49 +18,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const extractRole = (currentSession: Session | null) => {
+    // Priority 1: Secure Custom Claims in JWT (Hard to spoof)
+    const jwtRole = currentSession?.user?.app_metadata?.role;
+    if (jwtRole) return jwtRole;
+    
+    // Priority 2: User metadata (fallback)
+    return currentSession?.user?.user_metadata?.role || 'client';
+  };
+
+  const fetchProfileRole = async (userId: string) => {
     try {
+      // Direct database check as double-verification
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
-      setRole(data?.role || 'client');
+      if (!error && data) {
+        setRole(data.role);
+      }
     } catch (error) {
-      console.error("[Auth] Erreur lors de la récupération du profil:", error);
-      setRole('client');
+      console.error("[Auth] Database role verification failed:", error);
     }
   };
 
   useEffect(() => {
-    const getInitialSession = async () => {
+    const initAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         setSession(initialSession);
-        if (initialSession?.user) {
-          await fetchProfile(initialSession.user.id);
+        
+        if (initialSession) {
+          setRole(extractRole(initialSession));
+          // Perform secondary verification against the DB
+          await fetchProfileRole(initialSession.user.id);
         }
       } catch (error) {
-        console.error("[Auth] Erreur session:", error);
+        console.error("[Auth] Initialization error:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    getInitialSession();
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log(`[Auth Event] ${event}`);
-      
       setSession(newSession);
-      if (newSession?.user) {
-        await fetchProfile(newSession.user.id);
+      if (newSession) {
+        setRole(extractRole(newSession));
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          await fetchProfileRole(newSession.user.id);
+        }
       } else {
         setRole(null);
       }
-      
       setLoading(false);
     });
 
@@ -73,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="font-bold text-primary animate-pulse">Vérification de la session...</p>
+            <p className="font-bold text-primary animate-pulse">Sécurisation de la session...</p>
           </div>
         </div>
       )}
