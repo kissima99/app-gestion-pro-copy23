@@ -14,18 +14,28 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+  
+  if (loading) return null; // Attendre que l'auth soit stable
   if (!session) return <Navigate to="/login" replace />;
+  
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   
+  if (loading) return null;
+
   return (
     <Routes>
-      <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+      {/* Route de connexion avec redirection si déjà connecté */}
+      <Route 
+        path="/login" 
+        element={session ? <Navigate to="/" replace /> : <Login />} 
+      />
       
+      {/* Routes protégées */}
       <Route path="/" element={
         <ProtectedRoute>
           <Index />

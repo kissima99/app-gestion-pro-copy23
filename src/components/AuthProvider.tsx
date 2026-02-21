@@ -15,32 +15,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    // Une seule vérification initiale au montage
+    const initAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+      } catch (error) {
+        console.error("[Auth] Erreur session initiale:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    initAuth();
+
+    // Écoute des changements d'état avec filtre sur les événements critiques
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log(`[Auth] Événement: ${event}`);
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        setSession(newSession);
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <AuthContext.Provider value={{ session, loading }}>
-      {children}
+      {!loading ? children : (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };
