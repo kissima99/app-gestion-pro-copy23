@@ -176,7 +176,7 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
         {filteredTenants.map(tenant => {
           const owner = owners.find(o => o.id === tenant.ownerId);
           return (
-            <Card key={tenant.id} className="overflow-hidden border-l-8 border-l-primary shadow-lg bg-white hover:scale-[1.01] transition-transform">
+            <Card key={tenant.id} className="overflow-hidden border-l-4 border-l-primary shadow-lg bg-white hover:scale-[1.01] transition-transform">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-1">

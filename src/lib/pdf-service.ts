@@ -4,8 +4,11 @@ import { Owner, Tenant, Receipt, Agency } from '../types/rental';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-const formatNumber = (num: number) => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+const formatNumber = (num: number | string) => {
+  if (num === undefined || num === null) return "0";
+  const n = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(n)) return "0";
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 };
 
 export const generateLeasePDF = (owner: Owner, tenant: Tenant, agency: Agency) => {
@@ -115,71 +118,75 @@ export const generateCautionPDF = (owner: Owner, tenant: Tenant, agency: Agency)
 };
 
 export const generateReceiptPDF = (receipt: Receipt, agency: Agency) => {
-  const doc = new jsPDF();
-  const primaryColor = [124, 58, 237]; // Violet
-  
-  // 1. Informations de l'Agence (En-tête)
-  doc.setFontSize(18);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.setFont(undefined, 'bold');
-  doc.text(agency.name || 'AGENCE IMMOBILIÈRE', 20, 20);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(80, 80, 80);
-  doc.setFont(undefined, 'normal');
-  doc.text(agency.address || '', 20, 27);
-  doc.text(`Tél: ${agency.phone || ''}`, 20, 32);
-  doc.text(`Email: ${agency.email || ''}`, 20, 37);
-  if (agency.ninea) doc.text(`NINEA: ${agency.ninea}`, 20, 42);
+  try {
+    const doc = new jsPDF();
+    const primaryColor = [124, 58, 237]; // Violet
+    
+    // 1. Informations de l'Agence (En-tête)
+    doc.setFontSize(18);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text(agency.name || 'AGENCE IMMOBILIÈRE', 20, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont(undefined, 'normal');
+    doc.text(agency.address || '', 20, 27);
+    doc.text(`Tél: ${agency.phone || ''}`, 20, 32);
+    doc.text(`Email: ${agency.email || ''}`, 20, 37);
+    if (agency.ninea) doc.text(`NINEA: ${agency.ninea}`, 20, 42);
 
-  // Ligne de séparation
-  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.setLineWidth(0.5);
-  doc.line(20, 48, 190, 48);
+    // Ligne de séparation
+    doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setLineWidth(0.5);
+    doc.line(20, 48, 190, 48);
 
-  // Titre du document
-  doc.setFontSize(22);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'bold');
-  doc.text('QUITTANCE DE LOYER', 105, 65, { align: 'center' });
+    // Titre du document
+    doc.setFontSize(22);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'bold');
+    doc.text('QUITTANCE DE LOYER', 105, 65, { align: 'center' });
 
-  // 2. Informations du Locataire
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text('LOCATAIRE :', 20, 85);
-  doc.setFont(undefined, 'normal');
-  doc.text(`M/Mme ${receipt.tenantName}`, 50, 85);
-  doc.text(`Local : ${receipt.unitName}`, 50, 92);
-  doc.text(`Adresse : ${receipt.propertyAddress}`, 50, 99);
+    // 2. Informations du Locataire
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('LOCATAIRE :', 20, 85);
+    doc.setFont(undefined, 'normal');
+    doc.text(`M/Mme ${receipt.tenantName}`, 50, 85);
+    doc.text(`Local : ${receipt.unitName}`, 50, 92);
+    doc.text(`Adresse : ${receipt.propertyAddress}`, 50, 99);
 
-  // Détails du paiement
-  doc.setFont(undefined, 'bold');
-  doc.text('DÉTAILS DU PAIEMENT :', 20, 115);
-  
-  (doc as any).autoTable({
-    startY: 120,
-    head: [['Désignation', 'Période', 'Montant']],
-    body: [
-      [
-        'Loyer mensuel',
-        `${receipt.periodStart} au ${receipt.periodEnd}`,
-        `${formatNumber(receipt.amount)} FCFA`
-      ]
-    ],
-    theme: 'striped',
-    headStyles: { fillColor: primaryColor },
-    margin: { left: 20, right: 20 }
-  });
+    // Détails du paiement
+    doc.setFont(undefined, 'bold');
+    doc.text('DÉTAILS DU PAIEMENT :', 20, 115);
+    
+    (doc as any).autoTable({
+      startY: 120,
+      head: [['Désignation', 'Période', 'Montant']],
+      body: [
+        [
+          'Loyer mensuel',
+          `${receipt.periodStart || ''} au ${receipt.periodEnd || ''}`,
+          `${formatNumber(receipt.amount)} FCFA`
+        ]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: primaryColor },
+      margin: { left: 20, right: 20 }
+    });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
+    const finalY = (doc as any).lastAutoTable.finalY + 20;
 
-  // Signature
-  doc.setFont(undefined, 'bold');
-  const dateFait = format(new Date(), 'dd MMMM yyyy', { locale: fr });
-  doc.text(`Fait à Dakar, le ${dateFait}`, 190, finalY, { align: 'right' });
-  
-  doc.text('L\'Agence (Cachet et Signature)', 140, finalY + 20);
-  doc.line(130, finalY + 45, 190, finalY + 45);
+    // Signature
+    doc.setFont(undefined, 'bold');
+    const dateFait = format(new Date(), 'dd MMMM yyyy', { locale: fr });
+    doc.text(`Fait à Dakar, le ${dateFait}`, 190, finalY, { align: 'right' });
+    
+    doc.text('L\'Agence (Cachet et Signature)', 140, finalY + 20);
+    doc.line(130, finalY + 45, 190, finalY + 45);
 
-  doc.save(`Quittance_${receipt.receiptNumber}.pdf`);
+    doc.save(`Quittance_${receipt.receiptNumber || '000'}.pdf`);
+  } catch (error) {
+    console.error("Erreur lors de la génération du PDF:", error);
+  }
 };
