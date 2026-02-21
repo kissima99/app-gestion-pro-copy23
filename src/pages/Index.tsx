@@ -10,9 +10,9 @@ import { OwnerFinanceSummary } from '../components/OwnerFinanceSummary';
 import { AgencyForm } from '../components/AgencyForm';
 import { DataManagement } from '../components/DataManagement';
 import { useSupabaseData } from '../hooks/use-supabase-data';
-import { useLocalStorage } from '../hooks/use-local-storage';
-import { Owner, Tenant, Receipt, Expense, Agency, Arrear } from '../types/rental';
-import { Building2, Moon, Sun, Car, Wrench, LogOut, User as UserIcon } from 'lucide-react';
+import { useAgency } from '../hooks/use-agency';
+import { Owner, Tenant, Receipt, Expense, Arrear } from '../types/rental';
+import { Building2, Moon, Sun, Car, Wrench, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Link } from "react-router-dom";
@@ -29,10 +29,7 @@ const Index = () => {
   const receiptsData = useSupabaseData<Receipt>('receipts');
   const expensesData = useSupabaseData<Expense>('expenses');
   const arrearsData = useSupabaseData<Arrear>('arrears');
-
-  const [agency, setAgency] = useLocalStorage<Agency>('rental_agency', {
-    name: '', address: '', phone: '', email: '', ninea: '', rccm: '', commissionRate: 10
-  });
+  const { agency, updateAgency } = useAgency();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -178,7 +175,7 @@ const Index = () => {
 
           <TabsContent value="admin">
             <div className="max-w-2xl mx-auto space-y-8">
-              <AgencyForm agency={agency} setAgency={setAgency} />
+              <AgencyForm agency={agency} setAgency={updateAgency} />
               <DataManagement />
             </div>
           </TabsContent>

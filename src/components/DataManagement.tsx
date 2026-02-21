@@ -6,9 +6,15 @@ import { toast } from "sonner";
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
+// Liste blanche des clés autorisées pour l'import/export (préférences UI uniquement)
+const ALLOWED_PREFERENCE_KEYS = [
+  'theme',
+  'last_active_tab',
+  'ui_compact_mode'
+];
+
 const SecureDataSchema = z.object({
   metadata: z.object({
-    user_id: z.string().nullable(),
     exported_at: z.string(),
     version: z.string()
   }),
@@ -26,18 +32,23 @@ export const DataManagement = () => {
 
   const exportData = async () => {
     const payload: Record<string, any> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('rental_') || key.startsWith('automobile_'))) {
-        payload[key] = JSON.parse(localStorage.getItem(key) || '[]');
+    
+    // On n'exporte que les préférences UI autorisées
+    ALLOWED_PREFERENCE_KEYS.forEach(key => {
+      const value = localStorage.getItem(key);
+      if (value) {
+        try {
+          payload[key] = JSON.parse(value);
+        } catch {
+          payload[key] = value;
+        }
       }
-    }
+    });
     
     const exportObject = {
       metadata: {
-        user_id: user?.id || null,
         exported_at: new Date().toISOString(),
-        version: "2.0"
+        version: "3.0"
       },
       payload
     };
@@ -46,9 +57,9 @@ export const DataManagement = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `config_locale_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `preferences_ui_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
-    toast.success("Paramètres locaux exportés !");
+    toast.success("Préférences UI exportées !");
   };
 
   const importData = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,20 +72,26 @@ export const DataManagement = () => {
         const rawData = JSON.parse(e.target?.result as string);
         const validatedData = SecureDataSchema.parse(rawData);
         
-        const currentUserId = user?.id || null;
-        if (validatedData.metadata.user_id !== currentUserId) {
-          toast.error("Ce fichier provient d'un autre compte.");
-          return;
-        }
-
+        // On ne restaure que les clés autorisées présentes dans le payload
+        let importedCount = 0;
         Object.keys(validatedData.payload).forEach(key => {
-          localStorage.setItem(key, JSON.stringify(validatedData.payload[key]));
+          if (ALLOWED_PREFERENCE_KEYS.includes(key)) {
+            const value = typeof validatedData.payload[key] === 'string' 
+              ? validatedData.payload[key] 
+              : JSON.stringify(validatedData.payload[key]);
+            localStorage.setItem(key, value);
+            importedCount++;
+          }
         });
         
-        toast.success("Paramètres locaux restaurés !");
-        setTimeout(() => window.location.reload(), 1500);
+        if (importedCount > 0) {
+          toast.success(`${importedCount} préférences restaurées !`);
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          toast.error("Aucune préférence valide trouvée dans le fichier.");
+        }
       } catch (err) {
-        toast.error("Fichier de configuration invalide.");
+        toast.error("Fichier de configuration invalide ou corrompu.");
       }
     };
     reader.readAsText(file);
@@ -84,29 +101,29 @@ export const DataManagement = () => {
     <Card className="border-primary/20 bg-primary/5">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-primary">
-          <ShieldCheck className="w-5 h-5" /> Gestion des Paramètres Locaux
+          <ShieldCheck className="w-5 h-5" /> Gestion des Préférences Locales
         </CardTitle>
         <CardDescription>
-          Vos données de contrats (Immobilier & Automobile) sont désormais sécurisées sur nos serveurs. Cet outil ne gère que vos préférences locales.
+          Toutes vos données métier (Agences, Contrats, Locataires) sont désormais **exclusivement** gérées sur nos serveurs sécurisés.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-3">
           <Button onClick={exportData} variant="outline" className="bg-white border-primary/20">
-            <Download className="w-4 h-4 mr-2" /> Exporter Préférences
+            <Download className="w-4 h-4 mr-2" /> Exporter Préférences UI
           </Button>
           <div className="relative">
             <input type="file" id="import-db" className="hidden" accept=".json" onChange={importData} />
             <Button variant="default" onClick={() => document.getElementById('import-db')?.click()}>
-              <Upload className="w-4 h-4 mr-2" /> Importer Préférences
+              <Upload className="w-4 h-4 mr-2" /> Importer Préférences UI
             </Button>
           </div>
         </div>
-        <div className="p-3 bg-blue-100/50 border border-blue-200 rounded-lg">
-          <p className="text-[10px] text-blue-800 flex items-start gap-2">
-            <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" /> 
+        <div className="p-3 bg-green-100/50 border border-green-200 rounded-lg">
+          <p className="text-[10px] text-green-800 flex items-start gap-2">
+            <ShieldCheck className="w-3 h-3 mt-0.5 shrink-0" /> 
             <span>
-              <strong>Note de sécurité :</strong> Les contrats sont protégés par votre compte utilisateur et ne peuvent plus être injectés via un fichier JSON.
+              **Sécurité renforcée :** L'importation de données sensibles via JSON a été désactivée. Vos données sont protégées par votre compte utilisateur et les politiques RLS de Supabase.
             </span>
           </p>
         </div>

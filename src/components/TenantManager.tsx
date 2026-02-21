@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, FileText, Trash2, Home, User, Loader2, ShieldCheck, Layers } from 'lucide-react';
-import { Tenant, Owner, Agency } from '../types/rental';
+import { Search, UserPlus, FileText, Trash2, Home, Loader2, ShieldCheck } from 'lucide-react';
+import { Tenant, Owner } from '../types/rental';
 import { generateLeasePDF, generateCautionPDF } from '../lib/pdf-service';
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useLocalStorage } from '../hooks/use-local-storage';
+import { useAgency } from '../hooks/use-agency';
 
 interface Props {
   tenants: Tenant[];
@@ -24,9 +24,7 @@ const ROOM_COUNTS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"];
 export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [agency] = useLocalStorage<Agency>('rental_agency', {
-    name: '', address: '', phone: '', email: '', ninea: '', rccm: '', commissionRate: 10
-  });
+  const { agency } = useAgency();
 
   const [newTenant, setNewTenant] = useState<Partial<Tenant>>({
     firstName: '', lastName: '', birthDate: '', birthPlace: '', unitName: '', roomsCount: 1, idNumber: '', rentAmount: 0, status: 'active', ownerId: ''
@@ -58,7 +56,6 @@ export const TenantManager = ({ tenants, onAdd, onDelete, owners }: Props) => {
     `${t.firstName} ${t.lastName} ${t.unitName}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Style commun pour tous les inputs pour assurer la visibilité (Police noire et gras)
   const inputStyle = "border-2 border-primary/30 text-black font-bold focus:border-primary focus:ring-primary h-11 bg-white";
 
   return (

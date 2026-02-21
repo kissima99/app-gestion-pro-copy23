@@ -8,8 +8,10 @@ export interface Owner {
 }
 
 export interface Agency {
+  id?: string;
+  user_id?: string;
   name: string;
-  ownerName?: string; // Nom du propriétaire de l'agence
+  ownerName?: string;
   address: string;
   phone: string;
   email: string;
