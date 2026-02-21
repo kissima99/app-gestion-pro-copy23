@@ -19,19 +19,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const extractRole = (currentSession: Session | null) => {
-    // On ne fait confiance qu'aux app_metadata (Custom Claims) injectés dans le JWT par Supabase Auth.
-    // Ces données ne sont PAS modifiables par l'utilisateur via le SDK client.
+    // SÉCURITÉ : On utilise EXCLUSIVEMENT app_metadata (géré par le serveur).
+    // On ignore totalement user_metadata qui est modifiable par le client.
     const jwtRole = currentSession?.user?.app_metadata?.role;
-    if (jwtRole) return jwtRole;
     
-    // Par défaut, on considère l'utilisateur comme un client simple.
-    // Le rôle réel sera vérifié via la table 'profiles' dans fetchProfileRole.
+    if (jwtRole && (jwtRole === 'admin' || jwtRole === 'client')) {
+      return jwtRole;
+    }
+    
     return 'client';
   };
 
   const fetchProfileRole = async (userId: string) => {
     try {
-      // Vérification directe en base de données (Source de vérité)
+      // Source de vérité : La table profiles protégée par RLS
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
@@ -54,7 +55,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (initialSession) {
           setRole(extractRole(initialSession));
-          // Double vérification contre la base de données
           await fetchProfileRole(initialSession.user.id);
         }
       } catch (error) {
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="font-bold text-primary animate-pulse">Sécurisation de la session...</p>
+            <p className="font-bold text-primary animate-pulse">Vérification de sécurité...</p>
           </div>
         </div>
       )}

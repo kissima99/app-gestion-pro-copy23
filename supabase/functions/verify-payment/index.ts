@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("[verify-payment] Starting secure payment verification");
+    console.log("[verify-payment] Secure verification request received");
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -25,9 +25,9 @@ serve(async (req) => {
 
     const { transactionId, provider, amount } = await req.json();
 
-    if (!transactionId || !provider) {
-      console.error("[verify-payment] Missing transaction details");
-      return new Response(JSON.stringify({ error: 'Missing transactionId or provider' }), {
+    // Validation stricte des entrées
+    if (!transactionId || transactionId.length < 8 || !provider) {
+      return new Response(JSON.stringify({ error: 'Invalid transaction data' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -49,42 +49,42 @@ serve(async (req) => {
       });
     }
 
-    // 1. IDEMPOTENCY CHECK: Has this transaction already been used?
+    // 1. Vérification d'idempotence (Empêche de réutiliser un ID de transaction)
     const { data: existingPayment } = await supabaseAdmin
       .from('payments')
       .select('id')
       .eq('transaction_id', transactionId)
-      .single();
+      .maybeSingle();
 
     if (existingPayment) {
-      console.warn("[verify-payment] Duplicate transaction attempt:", transactionId);
       return new Response(JSON.stringify({ error: 'Transaction already processed' }), {
         status: 409,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    /**
-     * 2. EXTERNAL PROVIDER VERIFICATION
-     * This is where you call Stripe, Wave, or Orange Money API.
-     * Example (Stripe):
-     * const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${transactionId}`, {
-     *   headers: { 'Authorization': `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` }
-     * });
-     * const session = await response.json();
-     * if (session.payment_status !== 'paid') throw new Error('Payment not verified');
-     */
+    // 2. LOGIQUE DE VÉRIFICATION RÉELLE
+    // SÉCURITÉ : Ne jamais laisser 'isVerified = true' par défaut en production.
+    let isVerified = false;
     
-    console.log(`[verify-payment] Verifying ${provider} transaction: ${transactionId}`);
+    // Exemple pour Stripe/Wave :
+    // const providerRes = await fetch(`https://api.provider.com/verify/${transactionId}`, { ... });
+    // isVerified = (await providerRes.json()).status === 'SUCCESS';
     
-    // MOCK VERIFICATION (Replace with real API calls above)
-    const isVerified = true; // In production, this depends on the API response
-
-    if (!isVerified) {
-      throw new Error("Payment verification failed with provider");
+    // Pour le moment, on bloque si ce n'est pas un test explicite (à remplacer par votre API)
+    if (transactionId.startsWith('TEST_')) {
+       isVerified = true; 
+       console.warn("[verify-payment] Using TEST mode for transaction:", transactionId);
+    } else {
+       // En production, sans API de vérification, on refuse par défaut.
+       throw new Error("Payment provider API integration required for production verification.");
     }
 
-    // 3. RECORD THE PAYMENT
+    if (!isVerified) {
+      throw new Error("Payment could not be verified with the provider.");
+    }
+
+    // 3. Enregistrement et mise à jour du profil
     const { error: paymentError } = await supabaseAdmin
       .from('payments')
       .insert([{
@@ -97,7 +97,6 @@ serve(async (req) => {
 
     if (paymentError) throw paymentError;
 
-    // 4. UPDATE PROFILE STATUS
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({ has_paid: true })
@@ -105,15 +104,13 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    console.log("[verify-payment] Success for user:", user.id);
-
     return new Response(
       JSON.stringify({ success: true, message: 'Access granted' }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
-    console.error("[verify-payment] Error:", error.message);
+    console.error("[verify-payment] Critical Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
