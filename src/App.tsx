@@ -13,29 +13,24 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Composant de protection de route amélioré
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
-  if (loading) return null; // Attendre que l'auth soit stable
+  // On ne fait rien tant que le chargement initial n'est pas terminé
+  if (loading) return null;
+  
+  // Redirection seulement si la session est confirmée comme nulle
   if (!session) return <Navigate to="/login" replace />;
   
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
-  const { session, loading } = useAuth();
-  
-  if (loading) return null;
-
   return (
     <Routes>
-      {/* Route de connexion avec redirection si déjà connecté */}
-      <Route 
-        path="/login" 
-        element={session ? <Navigate to="/" replace /> : <Login />} 
-      />
+      <Route path="/login" element={<Login />} />
       
-      {/* Routes protégées */}
       <Route path="/" element={
         <ProtectedRoute>
           <Index />

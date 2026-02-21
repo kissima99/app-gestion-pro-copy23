@@ -15,24 +15,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Une seule vérification initiale au montage
-    const initAuth = async () => {
+    // Initialisation de la session
+    const getInitialSession = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         setSession(initialSession);
       } catch (error) {
-        console.error("[Auth] Erreur session initiale:", error);
+        console.error("[Auth] Erreur session:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    initAuth();
+    getInitialSession();
 
-    // Écoute des changements d'état avec filtre sur les événements critiques
+    // Surveillance des changements d'état
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log(`[Auth] Événement: ${event}`);
+      console.log(`[Auth Event] ${event}`);
       
+      // On ne change la session que si c'est nécessaire pour éviter les re-rendus inutiles
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         setSession(newSession);
       } else if (event === 'SIGNED_OUT') {
@@ -49,7 +50,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider value={{ session, loading }}>
       {!loading ? children : (
         <div className="min-h-screen flex items-center justify-center bg-background">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <p className="font-bold text-primary animate-pulse">Vérification de la session...</p>
+          </div>
         </div>
       )}
     </AuthContext.Provider>
